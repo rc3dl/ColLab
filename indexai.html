@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ColLab | Aprende y enseña</title>
+
+    <style>
+
+        /* ===== COLORES ===== */
+
+        :root {
+            --turquesa: #2A8C85;
+            --morado: #6B4FB3;
+            --amarillo: #F1B618;
+
+            --fondo: #F8F5EC;
+            --blanco: #FFFDF6;
+            --texto: #263238;
+            --gris: #66736F;
+        }
+
+        /* ===== GENERAL ===== */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: var(--fondo);
+            color: var(--texto);
+            line-height: 1.6;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .contenedor {
+            width: 90%;
+            max-width: 1150px;
+            margin: auto;
+        }
+
+        /* ===== NAVBAR ===== */
+
+        header {
+            background: var(--blanco);
+            border-bottom: 1px solid #e5e0d5;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav {
+            height: 75px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 25px;
+            font-weight: bold;
+            color: var(--turquesa);
+        }
+
+        .logo-cuadro {
+            width: 38px;
+            height: 38px;
+            background: var(--turquesa);
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .logo-cuadro::after {
+            content: "";
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background: var(--amarillo);
+            border-radius: 5px;
+            top: 11px;
+            left: 11px;
+        }
+
+        .menu {
+            display: flex;
+            gap: 30px;
+            font-weight: bold;
+        }
+
+        .menu a:hover {
+            color: var(--turquesa);
+        }
+
+        .boton {
+            border: none;
+            padding: 12px 22px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .boton:hover {
+            transform: translateY(-2px);
+        }
+
+        .boton-principal {
+            background: var(--turquesa);
+            color: white;
+        }
+
+        .boton-morado {
+            background: var(--morado);
+            color: white;
+        }
+
+        /* ===== HERO ===== */
+
+        .hero {
+            padding: 90px 0;
+        }
+
+        .hero-contenido {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            align-items: center;
+            gap: 60px;
+        }
+
+        .etiqueta {
+            color: var(--morado);
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 2px;
+        }
+
+        .hero h1 {
+            font-size: 55px;
+            line-height: 1.1;
+            margin: 15px 0;
+        }
+
+        .hero h1 span {
+            color: var(--turquesa);
+        }
+
+        .hero p {
+            color: var(--gris);
+            font-size: 18px;
+            margin-bottom: 30px;
+            max-width: 520px;
+        }
+
+        .botones {
+            display: flex;
+            gap: 15px;
+        }
+
+        /* ===== ILUSTRACIÓN HERO ===== */
+
+        .hero-imagen {
+            height: 400px;
+            background: linear-gradient(
+                135deg,
+                var(--morado),
+                var(--turquesa)
+            );
+
+            border-radius: 35px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .circulo {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+        }
+
+        .circulo-1 {
+            width: 250px;
+            height: 250px;
+            top: -70px;
+            right: -50px;
+        }
+
+        .circulo-2 {
+            width: 180px;
+            height: 180px;
+            bottom: -50px;
+            left: -30px;
+        }
+
+        .tarjeta-persona {
+            position: absolute;
+            width: 230px;
+            background: var(--blanco);
+            padding: 25px;
+            border-radius: 20px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            margin: auto;
+            background: var(--amarillo);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 35px;
+        }
+
+        .tarjeta-persona h3 {
+            margin-top: 15px;
+        }
+
+        .tarjeta-persona p {
+            font-size: 14px;
+            margin: 5px 0;
+        }
+
+        /* ===== SECCIONES ===== */
+
+        section {
+            padding: 80px 0;
+        }
+
+        .titulo-seccion {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .titulo-seccion h2 {
+            font-size: 38px;
+            margin-top: 10px;
+        }
+
+        .titulo-seccion p {
+            color: var(--gris);
+            max-width: 600px;
+            margin: 10px auto;
+        }
+
+        /* ===== TARJETAS ===== */
+
+        .tarjetas {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+        }
+
+        .tarjeta {
+            background: var(--blanco);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid #e6e1d6;
+            transition: 0.3s;
+        }
+
+        .tarjeta:hover {
+            transform: translateY(-7px);
+            box-shadow: 0 15px 30px rgba(42,140,133,0.12);
+        }
+
+        .icono {
+            width: 55px;
+            height: 55px;
+            background: #e6f2f0;
+            color: var(--turquesa);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 25px;
+            margin-bottom: 20px;
+        }
+
+        .tarjeta h3 {
+            margin-bottom: 10px;
+        }
+
+        .tarjeta p {
+            color: var(--gris);
+        }
+
+        /* ===== COMO FUNCIONA ===== */
+
+        .funciona {
+            background: var(--blanco);
+        }
+
+        .pasos {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .paso {
+            text-align: center;
+            padding: 25px;
+        }
+
+        .numero {
+            width: 45px;
+            height: 45px;
+            margin: 0 auto 15px;
+            border-radius: 50%;
+            background: var(--morado);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* ===== CTA ===== */
+
+        .cta {
+            margin: 70px auto;
+            background: linear-gradient(
+                135deg,
+                var(--turquesa),
+                var(--morado)
+            );
+
+            color: white;
+            border-radius: 30px;
+            padding: 65px 30px;
+            text-align: center;
+        }
+
+        .cta h2 {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+
+        .cta p {
+            max-width: 600px;
+            margin: auto auto 25px;
+            opacity: 0.9;
+        }
+
+        .cta .boton {
+            background: var(--amarillo);
+            color: var(--texto);
+        }
+
+        /* ===== FOOTER ===== */
+
+        footer {
+            background: #253B3A;
+            color: white;
+            padding: 40px 0;
+        }
+
+        .footer-contenido {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        footer p {
+            opacity: 0.7;
+            font-size: 14px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+
+        @media (max-width: 800px) {
+
+            .menu {
+                display: none;
+            }
+
+            .hero-contenido {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h1 {
+                font-size: 42px;
+            }
+
+            .tarjetas {
+                grid-template-columns: 1fr;
+            }
+
+            .pasos {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .hero-imagen {
+                height: 320px;
+            }
+
+            .footer-contenido {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 500px) {
+
+            .pasos {
+                grid-template-columns: 1fr;
+            }
+
+            .botones {
+                flex-direction: column;
+            }
+
+            .boton {
+                width: 100%;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+
+    <header>
+        <div class="contenedor">
+            <nav>
+
+                <a href="#" class="logo">
+                    <span class="logo-cuadro"></span>
+                    ColLab
+                </a>
+
+                <div class="menu">
+                    <a href="#inicio">Inicio</a>
+                    <a href="#funciones">Funciones</a>
+                    <a href="#como-funciona">Cómo funciona</a>
+                    <a href="#nosotros">Nosotros</a>
+                </div>
+
+                <a href="#registro">
+                    <button class="boton boton-principal">
+                        Unirme
+                    </button>
+                </a>
+
+            </nav>
+        </div>
+    </header>
+
+
+    <!-- HERO -->
+
+    <main id="inicio">
+
+        <section class="hero">
+
+            <div class="contenedor hero-contenido">
+
+                <div>
+
+                    <span class="etiqueta">
+                        Comunidad educativa
+                    </span>
+
+                    <h1>
+                        Aprende, enseña y
+                        <span>crece juntos.</span>
+                    </h1>
+
+                    <p>
+                        ColLab conecta estudiantes para compartir
+                        conocimientos, recibir apoyo académico y
+                        construir una comunidad donde todos pueden
+                        aprender de todos.
+                    </p>
+
+                    <div class="botones">
+
+                        <a href="#registro">
+                            <button class="boton boton-principal">
+                                Crear mi cuenta
+                            </button>
+                        </a>
+
+                        <a href="#como-funciona">
+                            <button class="boton boton-morado">
+                                Ver cómo funciona
+                            </button>
+                        </a>
+
+                    </div>
+
+                </div>
+
+
+                <div class="hero-imagen">
+
+                    <div class="circulo circulo-1"></div>
+                    <div class="circulo circulo-2"></div>
+
+                    <div class="tarjeta-persona">
+
+                        <div class="avatar">
+                            C
+                        </div>
+
+                        <h3>
+                            Cristhian
+                        </h3>
+
+                        <p>
+                            Estudiante y tutor
+                        </p>
+
+                        <p>
+                            2,340 puntos
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- FUNCIONES -->
+
+        <section id="funciones">
+
+            <div class="contenedor">
+
+                <div class="titulo-seccion">
+
+                    <span class="etiqueta">
+                        Lo que puedes hacer
+                    </span>
+
+                    <h2>
+                        Todo empieza compartiendo
+                    </h2>
+
+                    <p>
+                        ColLab reúne herramientas para que estudiar
+                        sea una experiencia más colaborativa.
+                    </p>
+
+                </div>
+
+
+                <div class="tarjetas">
+
+                    <div class="tarjeta">
+
+                        <div class="icono">
+                            T
+                        </div>
+
+                        <h3>
+                            Encuentra un tutor
+                        </h3>
+
+                        <p>
+                            Busca estudiantes que dominen la materia
+                            que necesitas aprender.
+                        </p>
+
+                    </div>
+
+
+                    <div class="tarjeta">
+
+                        <div class="icono">
+                            G
+                        </div>
+
+                        <h3>
+                            Grupos de estudio
+                        </h3>
+
+                        <p>
+                            Forma parte de grupos donde puedas
+                            estudiar y colaborar con otros estudiantes.
+                        </p>
+
+                    </div>
+
+
+                    <div class="tarjeta">
+
+                        <div class="icono">
+                            P
+                        </div>
+
+                        <h3>
+                            Gana puntos
+                        </h3>
+
+                        <p>
+                            Ayuda a otros estudiantes y gana puntos
+                            por tu participación.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- COMO FUNCIONA -->
+
+        <section id="como-funciona" class="funciona">
+
+            <div class="contenedor">
+
+                <div class="titulo-seccion">
+
+                    <span class="etiqueta">
+                        Cómo funciona
+                    </span>
+
+                    <h2>
+                        Cuatro pasos para comenzar
+                    </h2>
+
+                </div>
+
+
+                <div class="pasos">
+
+                    <div class="paso">
+
+                        <div class="numero">
+                            1
+                        </div>
+
+                        <h3>
+                            Crea tu perfil
+                        </h3>
+
+                        <p>
+                            Cuéntanos qué estudias y qué materias
+                            dominas.
+                        </p>
+
+                    </div>
+
+
+                    <div class="paso">
+
+                        <div class="numero">
+                            2
+                        </div>
+
+                        <h3>
+                            Encuentra ayuda
+                        </h3>
+
+                        <p>
+                            Busca estudiantes que puedan ayudarte.
+                        </p>
+
+                    </div>
+
+
+                    <div class="paso">
+
+                        <div class="numero">
+                            3
+                        </div>
+
+                        <h3>
+                            Aprende y enseña
+                        </h3>
+
+                        <p>
+                            Comparte tus conocimientos con otros.
+                        </p>
+
+                    </div>
+
+
+                    <div class="paso">
+
+                        <div class="numero">
+                            4
+                        </div>
+
+                        <h3>
+                            Gana puntos
+                        </h3>
+
+                        <p>
+                            Participa, ayuda y construye tu reputación.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- NOSOTROS -->
+
+        <section id="nosotros">
+
+            <div class="contenedor">
+
+                <div class="titulo-seccion">
+
+                    <span class="etiqueta">
+                        Sobre ColLab
+                    </span>
+
+                    <h2>
+                        Aprender juntos nos hace mejores
+                    </h2>
+
+                    <p>
+                        ColLab busca convertir el conocimiento de cada
+                        estudiante en una oportunidad para ayudar a
+                        alguien más.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- CTA -->
+
+        <section id="registro">
+
+            <div class="contenedor">
+
+                <div class="cta">
+
+                    <h2>
+                        ¿Listo para formar parte?
+                    </h2>
+
+                    <p>
+                        Crea tu perfil y comienza a aprender,
+                        enseñar y colaborar con otros estudiantes.
+                    </p>
+
+                    <button class="boton">
+                        Empezar gratis
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- FOOTER -->
+
+    <footer>
+
+        <div class="contenedor footer-contenido">
+
+            <strong>
+                ColLab
+            </strong>
+
+            <p>
+                Collaboration + Learning
+            </p>
+
+            <p>
+                © 2026 ColLab
+            </p>
+
+        </div>
+
+    </footer>
+
+</body>
+
+</html>
