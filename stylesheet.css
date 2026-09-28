@@ -17,3 +17,49 @@ body{margin:0;
         margin: bottom 10px;
         font-size:36px;
     }
+    header p{
+        font-size: 18px;
+    }
+    nav a{
+        color:rgb(0, 0, 0);
+        text-decoration:none;
+        margin:0 15px;
+        font-size:15px;
+    }
+    main{
+        padding:30px;
+    }
+    .principal{
+        border-radius:10px;
+        margin-bottom:30px;
+        padding:40px;
+        text-align:center;
+        background-color:#4345d2;
+    }
+    .principal h2{
+        font-size:30px;
+        color:white;
+    }
+    button{
+        background-color:#627bbf;
+        color:white;
+        border:none;
+        padding:10px 20px;
+        font-size:16px;
+        cursor:pointer;
+        border-radius:5px;
+    } 
+    .tarjeta{
+        border:1px solid #ccc;
+        border-radius:10px;
+        padding:20px;
+        margin-bottom:20px;
+        background-color:white;
+
+    }
+    footer{
+        background-color:#627bbf;
+        color:white;
+        text-align:center;
+        padding:20px;
+    }
