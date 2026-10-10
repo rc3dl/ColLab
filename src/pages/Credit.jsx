@@ -65,7 +65,7 @@ export default function Credit() {
                     className="w-full appearance-none rounded-xl px-4 py-3 pr-10 text-sm font-semibold border outline-none"
                     style={{ backgroundColor: "#FFFFFF", borderColor: "#E5DDB8", color: "#2D2926" }}
                   >
-                    {["Ramón Batista", "Ana Torres", "Pedro Buiz", "Mireya Santos"].map((c) => (
+                    {["Ramón Batista", "Yolanda Pérez", "Carlos Ruiz", "Mireya Santos"].map((c) => (
                       <option key={c}>{c}</option>
                     ))}
                   </select>
