@@ -12,9 +12,9 @@ const CHART_DATA = [
 ];
 
 const TRANSACTIONS = [
-  { name: "Maria Gomez", desc: "Grocery items & supplies", amount: "$45.00", date: "2026-07-28", status: "On Time" },
-  { name: "Carlos Mendoza", desc: "Weekly hardware credit", amount: "$120.00", date: "2026-07-25", status: "Pending" },
-  { name: "Ana Ruiz", desc: "Bakery stock order", amount: "$85.50", date: "2026-07-18", status: "Overdue" },
+  { name: "Maria Gomez", desc: "Grocery items & supplies", amount: "B/.45.00", date: "2026-07-28", status: "On Time" },
+  { name: "Carlos Mendoza", desc: "Weekly hardware credit", amount: "B/.120.00", date: "2026-07-25", status: "Pending" },
+  { name: "Ana Ruiz", desc: "Bakery stock order", amount: "B/.85.50", date: "2026-07-18", status: "Overdue" },
 ];
 
 function StatusBadge({ status }) {
@@ -92,9 +92,9 @@ export default function Reports() {
             {/* Summary cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
               {[
-                { label: "TOTAL ACTIVE CREDIT", value: "$1,450.00", trend: "+8.4% from last month", up: true, icon: Wallet },
-                { label: "COLLECTED THIS MONTH", value: "$3,120.50", trend: "+12.7% efficiency", up: true, icon: TrendingUp },
-                { label: "PENDING BALANCES", value: "$340.00", trend: "-3 accounts overdue", up: false, icon: TrendingDown },
+                { label: "TOTAL ACTIVE CREDIT", value: "B/.1,450.00", trend: "+8.4% from last month", up: true, icon: Wallet },
+                { label: "COLLECTED THIS MONTH", value: "B/.3,120.50", trend: "+12.7% efficiency", up: true, icon: TrendingUp },
+                { label: "PENDING BALANCES", value: "B/.340.00", trend: "-3 accounts overdue", up: false, icon: TrendingDown },
                 { label: "TOTAL CUSTOMERS", value: "48", trend: "+5 new this month", up: true, icon: Users },
               ].map((s) => (
                 <div key={s.label} className="p-4 rounded-2xl" style={{ backgroundColor: "#FFFFFF", border: "1px solid #F0E6C5" }}>
@@ -129,9 +129,9 @@ export default function Reports() {
                 <h3 className="font-bold text-sm mb-4" style={{ color: "#2D2926" }}>Payment Status Breakdown</h3>
                 <div className="space-y-4">
                   {[
-                    { label: "On Time", pct: 75, amount: "$2,340", color: "#10B981" },
-                    { label: "Pending", pct: 17, amount: "$540", color: "#F9D103" },
-                    { label: "Overdue", pct: 8, amount: "$240", color: "#EF4444" },
+                    { label: "On Time", pct: 75, amount: "B/.2,340", color: "#10B981" },
+                    { label: "Pending", pct: 17, amount: "B/.540", color: "#F9D103" },
+                    { label: "Overdue", pct: 8, amount: "B/.240", color: "#EF4444" },
                   ].map((b) => (
                     <div key={b.label}>
                       <div className="flex justify-between text-sm mb-1.5">
@@ -139,7 +139,7 @@ export default function Reports() {
                         <span style={{ color: "#6B6357" }}>{b.amount}</span>
                       </div>
                       <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: "#F0E6C5" }}>
-                        <div className="h-full rounded-full" style={{ width: `${b.pct}%`, backgroundColor: b.color }} />
+                        <div className="h-full rounded-full" style={{ width: `B/.{b.pct}%`, backgroundColor: b.color }} />
                       </div>
                     </div>
                   ))}

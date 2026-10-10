@@ -13,8 +13,8 @@ const DEBT_HISTORY = [
 
 const ACTIVITY = [
   { text: "Ramón Batista, Paid B/. 15.00", time: "Today" },
-  { text: "Ana Torres, New debt B/. 12.00", time: "Today" },
-  { text: "Pedro Buiz, Paid B/. 32.50", time: "Yesterday" },
+  { text: "Yolanda Pérez, New debt B/. 12.00", time: "Today" },
+  { text: "Carlos Ruiz, Paid B/. 32.50", time: "Yesterday" },
 ];
 
 function StatusBadge({ status }) {

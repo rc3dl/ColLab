@@ -1,0 +1,9 @@
+{
+  "name": "FIA'O",
+  "short_name": "FIA'O",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#B91C1C",
+  "theme_color": "#B91C1C",
+  "icons": []
+}
