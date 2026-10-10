@@ -1,2 +1,0 @@
-# ColLab
-ColLab Website 
