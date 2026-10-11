@@ -61,7 +61,7 @@ export default function Login() {
  > <GoogleIcon className="w-5 h-5 mr-2" />
 Continue with Google </Button>
 
-```
+
 <div className="relative mb-6">
   <div className="absolute inset-0 flex items-center">
     <div className="w-full border-t border-border" />
@@ -70,7 +70,7 @@ Continue with Google </Button>
     <span className="bg-card px-3 text-muted-foreground">or</span>
   </div>
 </div>
-```
+
 
 </>
 )}
