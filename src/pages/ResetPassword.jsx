@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { base44 } from "@/api/authClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,8 +8,10 @@ import { Lock, Loader2, AlertTriangle } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 
 export default function ResetPassword() {
-  const [searchParams] = useSearchParams();
-  const resetToken = searchParams.get("token");
+    const [ready, setReady] = useState(null);
+   useEffect(() => {
+     base44.auth.hasSession().then(setReady);
+   }, []);
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -25,7 +27,7 @@ export default function ResetPassword() {
     }
     setLoading(true);
     try {
-      await base44.auth.resetPassword({ resetToken, newPassword });
+      await base44.auth.resetPassword({ newPassword });
       window.location.href = "/login";
     } catch (err) {
       setError(err.message || "Failed to reset password");
@@ -34,7 +36,15 @@ export default function ResetPassword() {
     }
   };
 
-  if (!resetToken) {
+     if (ready === null) {
+     return (
+       <div className="fixed inset-0 flex items-center justify-center">
+         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+       </div>
+     );
+   }
+
+   if (!ready) {
     return (
       <AuthLayout
         icon={AlertTriangle}

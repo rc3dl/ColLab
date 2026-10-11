@@ -12,7 +12,7 @@ const CHART_DATA = [
 ];
 
 const TRANSACTIONS = [
-  { name: "Maria Gomez", desc: "Grocery items & supplies", amount: "B/.45.00", date: "2026-07-28", status: "On Time" },
+  { name: "Maria Goméz", desc: "Grocery items & supplies", amount: "B/.45.00", date: "2026-07-28", status: "On Time" },
   { name: "Carlos Mendoza", desc: "Weekly hardware credit", amount: "B/.120.00", date: "2026-07-25", status: "Pending" },
   { name: "Ana Ruiz", desc: "Bakery stock order", amount: "B/.85.50", date: "2026-07-18", status: "Overdue" },
 ];

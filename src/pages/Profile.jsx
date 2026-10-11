@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/lib/AuthContext";
-import { base44 } from "@/api/base44Client";
+import { base44 } from "@/api/authClient";
 import { User, Store, Mail, Phone, MapPin, LogOut, Save, Shield, Bell, Globe } from "lucide-react";
 
 export default function Profile() {
