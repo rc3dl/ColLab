@@ -15,14 +15,8 @@ const NAV_ITEMS = [
 
 function Logo() {
   return (
-    <Link to="/" className="flex items-center gap-0.5 select-none">
-      <span className="text-white font-bold text-2xl tracking-tight" style={{ fontFamily: "Poppins" }}>
-        FIA'
-      </span>
-      <span className="relative inline-flex items-center justify-center w-6 h-6">
-        <span className="absolute inset-0 rounded-full" style={{ backgroundColor: "#F9D103" }} />
-        <span className="relative text-white font-bold text-xl" style={{ fontFamily: "Poppins" }}>O</span>
-      </span>
+    <Link to="/" className="flex items-center select-none" aria-label="FIA'O, inicio">
+      <img src="/logo-fiao.svg" alt="FIA'O" className="h-9 w-auto" />
     </Link>
   );
 }

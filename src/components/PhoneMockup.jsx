@@ -23,13 +23,7 @@ export default function PhoneMockup() {
           {/* App header */}
           <div className="px-5 pt-6 pb-4" style={{ backgroundColor: "#B91C1C" }}>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-0.5">
-                <span className="text-white font-bold text-lg" style={{ fontFamily: "Poppins" }}>FIA'</span>
-                <span className="relative inline-flex items-center justify-center w-4 h-4">
-                  <span className="absolute inset-0 rounded-full" style={{ backgroundColor: "#F9D103" }} />
-                  <span className="relative text-white font-bold text-xs">O</span>
-                </span>
-              </div>
+          <img src="/logo-fiao-horizontal.svg" alt="FIA'O" className="h-5 w-auto" />
               <div className="w-7 h-7 rounded-full bg-white/20" />
             </div>
             <p className="text-white text-sm mt-3 font-medium">Good morning, John 👋</p>

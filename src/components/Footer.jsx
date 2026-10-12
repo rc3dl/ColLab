@@ -3,17 +3,7 @@ import { Link } from "react-router-dom";
 import { Mail, Phone } from "lucide-react";
 
 function Logo() {
-  return (
-    <div className="flex items-center gap-0.5 select-none">
-      <span className="text-white font-bold text-2xl tracking-tight" style={{ fontFamily: "Poppins" }}>
-        FIA'
-      </span>
-      <span className="relative inline-flex items-center justify-center w-6 h-6">
-        <span className="absolute inset-0 rounded-full" style={{ backgroundColor: "#F9D103" }} />
-        <span className="relative text-white font-bold text-xl" style={{ fontFamily: "Poppins" }}>O</span>
-      </span>
-    </div>
-  );
+  return <img src="/logo-fiao.svg" alt="FIA'O" className="h-9 w-auto select-none" />;
 }
 
 export default function Footer() {
