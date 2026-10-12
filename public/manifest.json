@@ -5,5 +5,5 @@
   "display": "standalone",
   "background_color": "#B91C1C",
   "theme_color": "#B91C1C",
-  "icons": [{ "src": "/logo-fiao.svg", "sizes": "any", "type": "image/svg+xml" }]
+  "icons": [{ "src": "/Logo-fiao.svg", "sizes": "any", "type": "image/svg+xml" }]
 }

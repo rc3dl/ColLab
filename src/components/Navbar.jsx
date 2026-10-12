@@ -16,7 +16,7 @@ const NAV_ITEMS = [
 function Logo() {
   return (
     <Link to="/" className="flex items-center select-none" aria-label="FIA'O, inicio">
-      <img src="/logo-fiao.svg" alt="FIA'O" className="h-9 w-auto" />
+      <img src="/Logo-fiao.svg" alt="FIA'O" className="h-9 w-auto" />
     </Link>
   );
 }
