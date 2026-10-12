@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Mail, Phone } from "lucide-react";
 
 function Logo() {
-  return return <img src="/Logo-fiao-120x40.svg" alt="FIA'O" className="h-9 sm:h-10 w-auto select-none" />;
+  return <img src="/Logo-fiao-120x40.svg" alt="FIA'O" className="h-9 sm:h-10 w-auto select-none" />;
 }
 
 export default function Footer() {
