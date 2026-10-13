@@ -14,9 +14,9 @@ const FILTERS = ["All", "On Time", "Pending", "Overdue"];
 
 function StatusBadge({ status }) {
   const map = {
-    "On Time": { bg: "#D1FAE5", color: "#065F46" },
-    Pending: { bg: "#FEF3C7", color: "#92400E" },
-    Overdue: { bg: "#FEE2E2", color: "#991B1B" },
+    "On Time": { bg: "var(--ok-bg)", color: "var(--ok-text)" },
+    Pending: { bg: "var(--warn-bg)", color: "var(--warn-text)" },
+    Overdue: { bg: "var(--bad-bg)", color: "var(--bad-text)" },
   };
   const s = map[status];
   return (
@@ -37,7 +37,7 @@ export default function Clients() {
   });
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#B91C1C" }}>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "var(--page-bg)" }}>
       <Navbar />
 
       <main className="flex-1">
@@ -45,38 +45,38 @@ export default function Clients() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
             <div>
-              <h1 className="font-bold text-3xl sm:text-4xl mb-2" style={{ color: "#2D2926", fontFamily: "Poppins" }}>
+              <h1 className="font-bold text-3xl sm:text-4xl mb-2" style={{ color: "var(--text)", fontFamily: "Poppins" }}>
                 Client Management
               </h1>
-              <h2 className="font-semibold text-lg mb-2" style={{ color: "#2D2926" }}>
+              <h2 className="font-semibold text-lg mb-2" style={{ color: "var(--text)" }}>
                 Each client, with a clear account
               </h2>
-              <p className="text-sm max-w-lg" style={{ color: "#6B6357" }}>
+              <p className="text-sm max-w-lg" style={{ color: "var(--text-muted)" }}>
                 Register your customers in seconds and see at a glance who is up to date, who owes, and who to remind.
               </p>
             </div>
             <div className="flex gap-2">
-              <button className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: "#FFFBEB", border: "1px solid #F0E6C5" }}>
-                <Calendar className="w-4 h-4" style={{ color: "#2D2926" }} />
+              <button className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border-cream)" }}>
+                <Calendar className="w-4 h-4" style={{ color: "var(--text)" }} />
               </button>
-              <button className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: "#FFFBEB", border: "1px solid #F0E6C5" }}>
-                <Moon className="w-4 h-4" style={{ color: "#2D2926" }} />
+              <button className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border-cream)" }}>
+                <Moon className="w-4 h-4" style={{ color: "var(--text)" }} />
               </button>
             </div>
           </div>
 
           {/* Dashboard module */}
           <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 rounded-3xl p-6" style={{ backgroundColor: "#FFFFFF", boxShadow: "0 10px 30px rgba(0,0,0,0.08)" }}>
+            <div className="lg:col-span-2 rounded-3xl p-6" style={{ backgroundColor: "var(--white)", boxShadow: "0 10px 30px rgba(0,0,0,0.08)" }}>
               {/* Search */}
               <div className="relative mb-4">
-                <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "#9A8F7A" }} />
+                <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "var(--text-faint)" }} />
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="🔍 Search client by name or phone..."
                   className="w-full rounded-full pl-11 pr-4 py-2.5 text-sm border outline-none"
-                  style={{ backgroundColor: "#FFFBEB", borderColor: "#F0E6C5", color: "#2D2926" }}
+                  style={{ backgroundColor: "var(--surface)", borderColor: "var(--border-cream)", color: "var(--text)" }}
                 />
               </div>
 
@@ -88,8 +88,8 @@ export default function Clients() {
                     onClick={() => setFilter(f)}
                     className="px-4 py-1.5 rounded-full text-sm font-semibold transition"
                     style={{
-                      backgroundColor: filter === f ? "#B91C1C" : "#FFFBEB",
-                      color: filter === f ? "#FFFFFF" : "#2D2926",
+                      backgroundColor: filter === f ? "#B91C1C" : "var(--surface)",
+                      color: filter === f ? "#FFFFFF" : "var(--text)",
                     }}
                   >
                     {f}
@@ -101,7 +101,7 @@ export default function Clients() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="text-left text-xs font-semibold tracking-wide" style={{ color: "#9A8F7A", borderBottom: "1px solid #F0E6C5" }}>
+                    <tr className="text-left text-xs font-semibold tracking-wide" style={{ color: "var(--text-faint)", borderBottom: "1px solid var(--border-cream)" }}>
                       <th className="pb-3 pr-2">CLIENT</th>
                       <th className="pb-3 pr-2">PURCHASES</th>
                       <th className="pb-3 pr-2">PENDING DEBT</th>
@@ -111,23 +111,23 @@ export default function Clients() {
                   </thead>
                   <tbody>
                     {filtered.map((c) => (
-                      <tr key={c.name} style={{ borderBottom: "1px solid #F7F1DC" }}>
+                      <tr key={c.name} style={{ borderBottom: "1px solid var(--border-cream)" }}>
                         <td className="py-3 pr-2">
                           <div className="flex items-center gap-2.5">
                             <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{ backgroundColor: "#B91C1C" }}>
                               {c.initials}
                             </div>
                             <div>
-                              <p className="text-sm font-semibold" style={{ color: "#2D2926" }}>{c.name}</p>
-                              <p className="text-xs" style={{ color: "#9A8F7A" }}>{c.phone}</p>
+                              <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>{c.name}</p>
+                              <p className="text-xs" style={{ color: "var(--text-faint)" }}>{c.phone}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="py-3 pr-2 text-sm" style={{ color: "#6B6357" }}>{c.purchases} purchases</td>
-                        <td className="py-3 pr-2 text-sm font-semibold" style={{ color: c.debt === "—" ? "#9A8F7A" : "#B91C1C" }}>{c.debt}</td>
+                        <td className="py-3 pr-2 text-sm" style={{ color: "var(--text-muted)" }}>{c.purchases} purchases</td>
+                        <td className="py-3 pr-2 text-sm font-semibold" style={{ color: c.debt === "—" ? "var(--text-faint)" : "#B91C1C" }}>{c.debt}</td>
                         <td className="py-3 pr-2"><StatusBadge status={c.status} /></td>
                         <td className="py-3">
-                          <button className="text-sm font-semibold flex items-center gap-1" style={{ color: "#B91C1C" }}>
+                          <button className="text-sm font-semibold flex items-center gap-1" style={{color: "var(--accent-text)" }}>
                             View detail <span>→</span>
                           </button>
                         </td>
@@ -138,21 +138,21 @@ export default function Clients() {
               </div>
 
               {/* Reminder module */}
-              <div className="mt-6 p-5 rounded-2xl" style={{ backgroundColor: "#FEF3C7" }}>
-                <h3 className="font-bold text-sm mb-1" style={{ color: "#2D2926" }}>Automatic Reminder Sent</h3>
-                <p className="text-sm mb-3" style={{ color: "#6B6357" }}>
+              <div className="mt-6 p-5 rounded-2xl" style={{ backgroundColor: "var(--warn-bg)" }}>
+                <h3 className="font-bold text-sm mb-1" style={{ color: "var(--text)" }}>Automatic Reminder Sent</h3>
+                <p className="text-sm mb-3" style={{ color: "var(--text-muted)" }}>
                   WhatsApp to Ramón Batista: "Hello Ramón, you have B/. 35.00 pending in Minisúper Doña Chela. See you soon!"
                 </p>
-                <button className="px-5 py-2 rounded-full text-sm font-bold text-white" style={{ backgroundColor: "#2D2926" }}>
+                <button className="px-5 py-2 rounded-full text-sm font-bold text-white" style={{ backgroundColor: "var(--btn-solid)" }}>
                   <span className="flex items-center gap-2"><Send className="w-3.5 h-3.5" /> Send</span>
                 </button>
               </div>
             </div>
 
             {/* Side card - Friendly Collections */}
-            <div className="rounded-3xl p-6 h-fit" style={{ backgroundColor: "#FFFFFF", boxShadow: "0 10px 30px rgba(0,0,0,0.08)" }}>
-              <h3 className="font-bold text-lg mb-2" style={{ color: "#2D2926" }}>Friendly Collections</h3>
-              <p className="text-sm mb-4" style={{ color: "#6B6357" }}>
+            <div className="rounded-3xl p-6 h-fit" style={{ backgroundColor: "var(--white)", boxShadow: "0 10px 30px rgba(0,0,0,0.08)" }}>
+              <h3 className="font-bold text-lg mb-2" style={{ color: "var(--text)" }}>Friendly Collections</h3>
+              <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>
                 Keep track of pending payments and send friendly reminders — no awkward conversations.
               </p>
               <div className="space-y-2">
@@ -161,12 +161,12 @@ export default function Clients() {
                   { name: "Carlos Ruiz", amount: "B/. 62.50", days: "5 days" },
                   { name: "Mireya Santos", amount: "B/. 12.00", days: "1 day" },
                 ].map((r) => (
-                  <div key={r.name} className="p-3 rounded-xl" style={{ backgroundColor: "#FFFBEB", border: "1px solid #F0E6C5" }}>
+                  <div key={r.name} className="p-3 rounded-xl" style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border-cream)" }}>
                     <div className="flex justify-between items-center">
-                      <p className="text-sm font-semibold" style={{ color: "#2D2926" }}>{r.name}</p>
-                      <span className="text-sm font-bold" style={{ color: "#B91C1C" }}>{r.amount}</span>
+                      <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>{r.name}</p>
+                      <span className="text-sm font-bold" style={{color: "var(--accent-text)" }}>{r.amount}</span>
                     </div>
-                    <p className="text-xs mt-0.5" style={{ color: "#9A8F7A" }}>Pending for {r.days}</p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--text-faint)" }}>Pending for {r.days}</p>
                   </div>
                 ))}
               </div>

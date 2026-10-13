@@ -21,7 +21,7 @@ export default function Products() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#B91C1C" }}>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "var(--page-bg)" }}>
       <Navbar />
 
       <main className="flex-1">
@@ -31,14 +31,14 @@ export default function Products() {
             <button
               onClick={() => setTab("Inventory")}
               className="px-5 py-2.5 rounded-full text-sm font-semibold transition"
-              style={{ backgroundColor: tab === "Inventory" ? "#B91C1C" : "#FFFBEB", color: tab === "Inventory" ? "#FFFFFF" : "#2D2926" }}
+              style={{ backgroundColor: tab === "Inventory" ? "#B91C1C" : "var(--surface)", color: tab === "Inventory" ? "#FFFFFF" : "var(--text)" }}
             >
               Inventory
             </button>
             <button
               onClick={() => setTab("Fiado")}
               className="px-5 py-2.5 rounded-full text-sm font-semibold transition"
-              style={{ backgroundColor: tab === "Fiado" ? "#B91C1C" : "#FFFBEB", color: tab === "Fiado" ? "#FFFFFF" : "#2D2926" }}
+              style={{ backgroundColor: tab === "Fiado" ? "#B91C1C" : "var(--surface)", color: tab === "Fiado" ? "#FFFFFF" : "var(--text)" }}
             >
               Register Fiado Sale
             </button>
@@ -47,30 +47,30 @@ export default function Products() {
 
         {/* Content card */}
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6">
-          <div className="rounded-3xl p-6 sm:p-8" style={{ backgroundColor: "#FFFDF0" }}>
+          <div className="rounded-3xl p-6 sm:p-8" style={{ backgroundColor: "var(--surface-alt)" }}>
             {/* Search */}
             <div className="relative mb-6 max-w-md">
-              <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "#9A8F7A" }} />
+              <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "var(--text-faint)" }} />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search products..."
                 className="w-full rounded-full pl-11 pr-4 py-2.5 text-sm border outline-none"
-                style={{ backgroundColor: "#FFFFFF", borderColor: "#E5DDB8", color: "#2D2926" }}
+                style={{ backgroundColor: "var(--white)", borderColor: "var(--border-cream)", color: "var(--text)" }}
               />
             </div>
 
-            <h1 className="font-bold text-3xl sm:text-4xl mb-2" style={{ color: "#2D2926", fontFamily: "Poppins" }}>
+            <h1 className="font-bold text-3xl sm:text-4xl mb-2" style={{ color: "var(--text)", fontFamily: "Poppins" }}>
               Your inventory, always exact
             </h1>
-            <p className="text-sm mb-6" style={{ color: "#6B6357" }}>
+            <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>
               Showing core products and add option. Use search bar to look up items.
             </p>
 
             {/* Inventory alerts banner */}
-            <div className="flex items-center gap-3 p-4 rounded-xl mb-6" style={{ backgroundColor: "#FEF3C7", border: "1px solid #F9D103" }}>
-              <Bell className="w-5 h-5 flex-shrink-0" style={{ color: "#92400E" }} />
-              <p className="text-sm" style={{ color: "#92400E" }}>
+            <div className="flex items-center gap-3 p-4 rounded-xl mb-6" style={{ backgroundColor: "var(--warn-bg)", border: "1px solid #F9D103" }}>
+              <Bell className="w-5 h-5 flex-shrink-0" style={{ color: "var(--warn-text)" }} />
+              <p className="text-sm" style={{ color: "var(--warn-text)" }}>
                 <span className="font-bold">Inventory Alert:</span> 2 products are running low and may need restocking soon.
               </p>
             </div>
@@ -78,22 +78,22 @@ export default function Products() {
             {/* Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {filtered.map((p) => (
-                <div key={p.name} className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#FFFFFF", border: "1px solid #F0E6C5" }}>
-                  <div className="aspect-square flex items-center justify-center" style={{ backgroundColor: "#FFFBEB" }}>
+                <div key={p.name} className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
+                  <div className="aspect-square flex items-center justify-center" style={{ backgroundColor: "var(--surface)" }}>
                     <img src={p.img} alt={p.name} className="w-full h-full object-cover" />
                   </div>
                   <div className="p-4">
-                    <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold mb-2" style={{ backgroundColor: "#F9D103", color: "#2D2926" }}>
+                    <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold mb-2" style={{ backgroundColor: "#F9D103", color: "var(--on-yellow)" }}>
                       {p.category}
                     </span>
-                    <h3 className="font-bold text-sm mb-0.5" style={{ color: "#2D2926" }}>{p.name}</h3>
-                    <p className="font-bold text-base mb-1" style={{ color: "#B91C1C" }}>{p.price}</p>
-                    <p className="text-xs mb-3" style={{ color: "#6B6357" }}>Stock: {p.stock}</p>
+                    <h3 className="font-bold text-sm mb-0.5" style={{ color: "var(--text)" }}>{p.name}</h3>
+                    <p className="font-bold text-base mb-1" style={{color: "var(--accent-text)" }}>{p.price}</p>
+                    <p className="text-xs mb-3" style={{ color: "var(--text-muted)" }}>Stock: {p.stock}</p>
                     <div className="flex gap-2">
-                      <button className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold" style={{ backgroundColor: "#FFFBEB", color: "#2D2926", border: "1px solid #F0E6C5" }}>
+                      <button className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold" style={{ backgroundColor: "var(--surface)", color: "var(--text)", border: "1px solid var(--border-cream)" }}>
                         <Pencil className="w-3 h-3" /> Edit
                       </button>
-                      <button className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold" style={{ backgroundColor: "#FEE2E2", color: "#991B1B" }}>
+                      <button className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold" style={{ backgroundColor: "var(--bad-bg)", color: "var(--bad-text)" }}>
                         <Trash2 className="w-3 h-3" /> Delete
                       </button>
                     </div>
@@ -102,19 +102,19 @@ export default function Products() {
               ))}
 
               {/* Add card */}
-              <button className="rounded-2xl flex flex-col items-center justify-center p-6 min-h-[280px]" style={{ border: "2px dashed #D6CDB0", backgroundColor: "transparent" }}>
+              <button className="rounded-2xl flex flex-col items-center justify-center p-6 min-h-[280px]" style={{ border: "2px dashed var(--border-cream)", backgroundColor: "transparent" }}>
                 <div className="w-14 h-14 rounded-full flex items-center justify-center mb-3" style={{ backgroundColor: "#F9D103" }}>
-                  <Plus className="w-6 h-6" style={{ color: "#2D2926" }} />
+                  <Plus className="w-6 h-6" style={{ color: "var(--text)" }} />
                 </div>
-                <p className="font-bold text-sm" style={{ color: "#2D2926" }}>Add New Product</p>
-                <p className="text-xs mt-1" style={{ color: "#6B6357" }}>Create a new item</p>
+                <p className="font-bold text-sm" style={{ color: "var(--text)" }}>Add New Product</p>
+                <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>Create a new item</p>
               </button>
             </div>
 
             {/* Digital catalog note */}
-            <div className="mt-8 p-5 rounded-2xl" style={{ backgroundColor: "#FFFBEB", border: "1px solid #F3E9C8" }}>
-              <h3 className="font-bold text-base mb-1" style={{ color: "#2D2926" }}>Digital Catalog</h3>
-              <p className="text-sm" style={{ color: "#6B6357" }}>
+            <div className="mt-8 p-5 rounded-2xl" style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border-cream)" }}>
+              <h3 className="font-bold text-base mb-1" style={{ color: "var(--text)" }}>Digital Catalog</h3>
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
                 Display your products in a digital catalog so customers can view what's available — no more printed lists or outdated price tags.
               </p>
             </div>

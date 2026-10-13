@@ -13,15 +13,15 @@ const QUICK_LINKS = [
 ];
 
 const STATS = [
-  { label: "Outstanding Debt", value: "B/. 480.00", icon: TrendingUp, color: "#B91C1C" },
+  { label: "Outstanding Debt", value: "B/. 480.00", icon: TrendingUp,color: "var(--accent-text)" },
   { label: "Payments Today", value: "B/. 150.00", icon: Banknote, color: "#059669" },
-  { label: "Customers with Debt", value: "18", icon: Users, color: "#2D2926" },
-  { label: "Overdue", value: "4", icon: AlertTriangle, color: "#B91C1C" },
+  { label: "Customers with Debt", value: "18", icon: Users, color: "var(--text)" },
+  { label: "Overdue", value: "4", icon: AlertTriangle,color: "var(--accent-text)" },
 ];
 
 export default function Dashboard() {
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#B91C1C" }}>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "var(--page-bg)" }}>
       <Navbar />
 
       <main className="flex-1">
@@ -39,10 +39,10 @@ export default function Dashboard() {
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
             {STATS.map((s) => (
-              <div key={s.label} className="p-4 rounded-2xl" style={{ backgroundColor: "#FFFBEB" }}>
+              <div key={s.label} className="p-4 rounded-2xl" style={{ backgroundColor: "var(--surface)" }}>
                 <s.icon className="w-5 h-5 mb-2" style={{ color: s.color }} />
-                <p className="font-bold text-xl" style={{ color: "#2D2926" }}>{s.value}</p>
-                <p className="text-xs" style={{ color: "#6B6357" }}>{s.label}</p>
+                <p className="font-bold text-xl" style={{ color: "var(--text)" }}>{s.value}</p>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>{s.label}</p>
               </div>
             ))}
           </div>
@@ -57,7 +57,7 @@ export default function Dashboard() {
                 key={q.path}
                 to={q.path}
                 className="group p-5 rounded-2xl transition-transform hover:scale-[1.02]"
-                style={{ backgroundColor: "#FFFBEB" }}
+                style={{ backgroundColor: "var(--surface)" }}
               >
                 <div className="flex items-start gap-3">
                   <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#B91C1C" }}>
@@ -65,10 +65,10 @@ export default function Dashboard() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-bold text-base" style={{ color: "#2D2926" }}>{q.label}</h3>
-                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" style={{ color: "#B91C1C" }} />
+                      <h3 className="font-bold text-base" style={{ color: "var(--text)" }}>{q.label}</h3>
+                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" style={{color: "var(--accent-text)" }} />
                     </div>
-                    <p className="text-sm mt-1" style={{ color: "#6B6357" }}>{q.desc}</p>
+                    <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>{q.desc}</p>
                   </div>
                 </div>
               </Link>

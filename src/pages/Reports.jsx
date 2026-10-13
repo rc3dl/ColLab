@@ -19,9 +19,9 @@ const TRANSACTIONS = [
 
 function StatusBadge({ status }) {
   const map = {
-    "On Time": { bg: "#D1FAE5", color: "#065F46" },
-    Pending: { bg: "#FEF3C7", color: "#92400E" },
-    Overdue: { bg: "#FEE2E2", color: "#991B1B" },
+    "On Time": { bg: "var(--ok-bg)", color: "var(--ok-text)" },
+    Pending: { bg: "var(--warn-bg)", color: "var(--warn-text)" },
+    Overdue: { bg: "var(--bad-bg)", color: "var(--bad-text)" },
   };
   const s = map[status];
   return (
@@ -35,55 +35,55 @@ export default function Reports() {
   const [page, setPage] = useState(1);
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#B91C1C" }}>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "var(--page-bg)" }}>
       <Navbar />
 
       <main className="flex-1">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
-          <div className="rounded-3xl p-6 sm:p-8" style={{ backgroundColor: "#FFFBEB" }}>
+          <div className="rounded-3xl p-6 sm:p-8" style={{ backgroundColor: "var(--surface)" }}>
             {/* Title row */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
               <div className="flex items-center gap-3">
-                <h1 className="font-bold text-2xl sm:text-3xl" style={{ color: "#2D2926", fontFamily: "Poppins" }}>
+                <h1 className="font-bold text-2xl sm:text-3xl" style={{ color: "var(--text)", fontFamily: "Poppins" }}>
                   FIA'O Reports
                 </h1>
-                <button className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "#FFFFFF", border: "1px solid #F0E6C5" }}>
-                  <Calendar className="w-4 h-4" style={{ color: "#2D2926" }} />
+                <button className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
+                  <Calendar className="w-4 h-4" style={{ color: "var(--text)" }} />
                 </button>
-                <button className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "#FFFFFF", border: "1px solid #F0E6C5" }}>
-                  <Moon className="w-4 h-4" style={{ color: "#2D2926" }} />
+                <button className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
+                  <Moon className="w-4 h-4" style={{ color: "var(--text)" }} />
                 </button>
               </div>
               <div className="flex gap-2">
-                <button className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-white" style={{ border: "1px solid #2D2926", color: "#2D2926" }}>
+                <button className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-[var(--white)]" style={{ border: "1px solid var(--text)", color: "var(--text)" }}>
                   <FileText className="w-4 h-4" /> Export PDF
                 </button>
-                <button className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-white" style={{ border: "1px solid #2D2926", color: "#2D2926" }}>
+                <button className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-[var(--white)]" style={{ border: "1px solid var(--text)", color: "var(--text)" }}>
                   <FileSpreadsheet className="w-4 h-4" /> Export Excel
                 </button>
               </div>
             </div>
-            <p className="text-sm mb-6" style={{ color: "#6B6357" }}>
+            <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>
               Financial tracking, credit summaries, and business analytics overview.
             </p>
 
             {/* Filters */}
-            <div className="grid sm:grid-cols-3 gap-3 mb-6 p-4 rounded-2xl" style={{ backgroundColor: "#FFFFFF", border: "1px solid #F0E6C5" }}>
+            <div className="grid sm:grid-cols-3 gap-3 mb-6 p-4 rounded-2xl" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
               <div>
-                <label className="text-xs font-semibold block mb-1.5" style={{ color: "#6B6357" }}>DATE RANGE</label>
+                <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--text-muted)" }}>DATE RANGE</label>
                 <div className="flex gap-2">
-                  <input type="date" className="flex-1 rounded-lg px-2 py-2 text-sm border outline-none" style={{ borderColor: "#E5DDB8", color: "#2D2926" }} />
-                  <input type="date" className="flex-1 rounded-lg px-2 py-2 text-sm border outline-none" style={{ borderColor: "#E5DDB8", color: "#2D2926" }} />
+                  <input type="date" className="flex-1 rounded-lg px-2 py-2 text-sm border outline-none" style={{ borderColor: "var(--border-cream)", color: "var(--text)" }} />
+                  <input type="date" className="flex-1 rounded-lg px-2 py-2 text-sm border outline-none" style={{ borderColor: "var(--border-cream)", color: "var(--text)" }} />
                 </div>
               </div>
               <div>
-                <label className="text-xs font-semibold block mb-1.5" style={{ color: "#6B6357" }}>CUSTOMER STATUS / NAME</label>
-                <select className="w-full rounded-lg px-3 py-2 text-sm border outline-none" style={{ backgroundColor: "#FFFFFF", borderColor: "#E5DDB8", color: "#2D2926" }}>
+                <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--text-muted)" }}>CUSTOMER STATUS / NAME</label>
+                <select className="w-full rounded-lg px-3 py-2 text-sm border outline-none" style={{ backgroundColor: "var(--white)", borderColor: "var(--border-cream)", color: "var(--text)" }}>
                   <option>All Customers (All Names)</option>
                 </select>
               </div>
               <div className="flex items-end">
-                <button className="w-full py-2.5 rounded-lg text-sm font-bold text-white" style={{ backgroundColor: "#2D2926" }}>
+                <button className="w-full py-2.5 rounded-lg text-sm font-bold text-white" style={{ backgroundColor: "var(--btn-solid)" }}>
                   Apply Filters
                 </button>
               </div>
@@ -97,12 +97,12 @@ export default function Reports() {
                 { label: "PENDING BALANCES", value: "B/.340.00", trend: "-3 accounts overdue", up: false, icon: TrendingDown },
                 { label: "TOTAL CUSTOMERS", value: "48", trend: "+5 new this month", up: true, icon: Users },
               ].map((s) => (
-                <div key={s.label} className="p-4 rounded-2xl" style={{ backgroundColor: "#FFFFFF", border: "1px solid #F0E6C5" }}>
+                <div key={s.label} className="p-4 rounded-2xl" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
                   <div className="flex items-center justify-between mb-2">
-                    <s.icon className="w-4 h-4" style={{ color: "#B91C1C" }} />
+                    <s.icon className="w-4 h-4" style={{color: "var(--accent-text)" }} />
                   </div>
-                  <p className="text-[11px] font-semibold tracking-wide mb-1" style={{ color: "#6B6357" }}>{s.label}</p>
-                  <p className="font-bold text-xl mb-1" style={{ color: "#2D2926" }}>{s.value}</p>
+                  <p className="text-[11px] font-semibold tracking-wide mb-1" style={{ color: "var(--text-muted)" }}>{s.label}</p>
+                  <p className="font-bold text-xl mb-1" style={{ color: "var(--text)" }}>{s.value}</p>
                   <p className="text-xs font-semibold" style={{ color: s.up ? "#059669" : "#B91C1C" }}>{s.trend}</p>
                 </div>
               ))}
@@ -110,13 +110,13 @@ export default function Reports() {
 
             {/* Charts */}
             <div className="grid lg:grid-cols-2 gap-4 mb-6">
-              <div className="p-5 rounded-2xl" style={{ backgroundColor: "#FFFFFF", border: "1px solid #F0E6C5" }}>
-                <h3 className="font-bold text-sm mb-4" style={{ color: "#2D2926" }}>Credit Activity & Payments Flow</h3>
+              <div className="p-5 rounded-2xl" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
+                <h3 className="font-bold text-sm mb-4" style={{ color: "var(--text)" }}>Credit Activity & Payments Flow</h3>
                 <ResponsiveContainer width="100%" height={240}>
                   <BarChart data={CHART_DATA} barGap={4}>
-                    <XAxis dataKey="week" tick={{ fontSize: 11, fill: "#6B6357" }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: "#6B6357" }} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12, border: "1px solid #F0E6C5" }} />
+                    <XAxis dataKey="week" tick={{ fontSize: 11, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12, border: "1px solid var(--border-cream)" }} />
                     <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
                     <Bar dataKey="Credit issued" fill="#B91C1C" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="Payments Received" fill="#F9D103" radius={[4, 4, 0, 0]} />
@@ -125,8 +125,8 @@ export default function Reports() {
                 </ResponsiveContainer>
               </div>
 
-              <div className="p-5 rounded-2xl" style={{ backgroundColor: "#FFFFFF", border: "1px solid #F0E6C5" }}>
-                <h3 className="font-bold text-sm mb-4" style={{ color: "#2D2926" }}>Payment Status Breakdown</h3>
+              <div className="p-5 rounded-2xl" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
+                <h3 className="font-bold text-sm mb-4" style={{ color: "var(--text)" }}>Payment Status Breakdown</h3>
                 <div className="space-y-4">
                   {[
                     { label: "On Time", pct: 75, amount: "B/.2,340", color: "#10B981" },
@@ -135,10 +135,10 @@ export default function Reports() {
                   ].map((b) => (
                     <div key={b.label}>
                       <div className="flex justify-between text-sm mb-1.5">
-                        <span className="font-semibold" style={{ color: "#2D2926" }}>{b.label} ({b.pct}%)</span>
-                        <span style={{ color: "#6B6357" }}>{b.amount}</span>
+                        <span className="font-semibold" style={{ color: "var(--text)" }}>{b.label} ({b.pct}%)</span>
+                        <span style={{ color: "var(--text-muted)" }}>{b.amount}</span>
                       </div>
-                      <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: "#F0E6C5" }}>
+                      <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: "var(--border-cream)" }}>
                         <div className="h-full rounded-full" style={{ width: `B/.{b.pct}%`, backgroundColor: b.color }} />
                       </div>
                     </div>
@@ -148,12 +148,12 @@ export default function Reports() {
             </div>
 
             {/* Transactions table */}
-            <div className="p-5 rounded-2xl" style={{ backgroundColor: "#FFFFFF", border: "1px solid #F0E6C5" }}>
-              <h3 className="font-bold text-sm mb-4" style={{ color: "#2D2926" }}>Recent Credit Transactions</h3>
+            <div className="p-5 rounded-2xl" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
+              <h3 className="font-bold text-sm mb-4" style={{ color: "var(--text)" }}>Recent Credit Transactions</h3>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="text-left text-xs font-semibold tracking-wide" style={{ color: "#9A8F7A", borderBottom: "1px solid #F0E6C5" }}>
+                    <tr className="text-left text-xs font-semibold tracking-wide" style={{ color: "var(--text-faint)", borderBottom: "1px solid var(--border-cream)" }}>
                       <th className="pb-3 pr-3">Customer Name</th>
                       <th className="pb-3 pr-3">Description</th>
                       <th className="pb-3 pr-3">Amount</th>
@@ -163,11 +163,11 @@ export default function Reports() {
                   </thead>
                   <tbody>
                     {TRANSACTIONS.map((t) => (
-                      <tr key={t.name} style={{ borderBottom: "1px solid #F7F1DC" }}>
-                        <td className="py-3 pr-3 text-sm font-semibold" style={{ color: "#2D2926" }}>{t.name}</td>
-                        <td className="py-3 pr-3 text-sm" style={{ color: "#6B6357" }}>{t.desc}</td>
-                        <td className="py-3 pr-3 text-sm font-bold" style={{ color: "#B91C1C" }}>{t.amount}</td>
-                        <td className="py-3 pr-3 text-sm" style={{ color: "#6B6357" }}>{t.date}</td>
+                      <tr key={t.name} style={{ borderBottom: "1px solid var(--border-cream)" }}>
+                        <td className="py-3 pr-3 text-sm font-semibold" style={{ color: "var(--text)" }}>{t.name}</td>
+                        <td className="py-3 pr-3 text-sm" style={{ color: "var(--text-muted)" }}>{t.desc}</td>
+                        <td className="py-3 pr-3 text-sm font-bold" style={{color: "var(--accent-text)" }}>{t.amount}</td>
+                        <td className="py-3 pr-3 text-sm" style={{ color: "var(--text-muted)" }}>{t.date}</td>
                         <td className="py-3"><StatusBadge status={t.status} /></td>
                       </tr>
                     ))}
@@ -182,9 +182,9 @@ export default function Reports() {
                     onClick={() => setPage(n)}
                     className="w-8 h-8 rounded-full text-sm font-semibold transition"
                     style={{
-                      backgroundColor: page === n ? "#B91C1C" : "#FFFBEB",
-                      color: page === n ? "#FFFFFF" : "#2D2926",
-                      border: "1px solid #F0E6C5",
+                      backgroundColor: page === n ? "#B91C1C" : "var(--surface)",
+                      color: page === n ? "#FFFFFF" : "var(--text)",
+                      border: "1px solid var(--border-cream)",
                     }}
                   >
                     {n}

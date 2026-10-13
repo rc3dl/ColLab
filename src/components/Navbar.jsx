@@ -29,11 +29,11 @@ export default function Navbar() {
   const homePath = isAuthenticated ? "/dashboard" : "/";
 
   return (
-    <header className="w-full" style={{ backgroundColor: "#B91C1C" }}>
+    <header className="w-full" style={{ backgroundColor: "var(--navbar-bg)" }}>
       {/* Floating nav */}
       <div className="px-3 sm:px-6 pb-4">
         <nav className="mx-auto max-w-6xl rounded-full px-4 sm:px-6 py-3 flex items-center justify-between shadow-lg"
-          style={{ backgroundColor: "#B91C1C", boxShadow: "0 8px 24px rgba(0,0,0,0.18)" }}>
+          style={{ backgroundColor: "var(--navbar-bg)", boxShadow: "0 8px 24px rgba(0,0,0,0.18)" }}>
           <Logo />
 
           {isAuthenticated ? (
@@ -104,7 +104,7 @@ export default function Navbar() {
 
         {/* Mobile menu */}
         {open && isAuthenticated && (
-          <div className="lg:hidden mx-auto max-w-6xl mt-2 rounded-2xl p-3 flex flex-col gap-1.5" style={{ backgroundColor: "#B91C1C" }}>
+          <div className="lg:hidden mx-auto max-w-6xl mt-2 rounded-2xl p-3 flex flex-col gap-1.5" style={{ backgroundColor: "var(--navbar-bg)" }}>
             {NAV_ITEMS.map((item) => {
               const target = item.label === "Home" ? homePath : item.path;
               const active = location.pathname === target;

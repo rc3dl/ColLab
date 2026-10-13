@@ -7,7 +7,7 @@ import { ShieldCheck, BookOpen, Bell, BarChart3, Smartphone, Wallet } from "luci
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#B91C1C" }}>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "var(--page-bg)" }}>
       <Navbar />
 
       {/* Hero */}
@@ -22,10 +22,10 @@ export default function Home() {
               FIA'O digitizes customer, debt, and payment management for convenience stores and small businesses in Panama, replacing the traditional paper ledger with a modern digital management system.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
-              <Link to="/login" className="px-7 py-3 rounded-full font-bold text-sm text-center transition-transform hover:scale-105" style={{ backgroundColor: "#F9D103", color: "#2D2926" }}>
+              <Link to="/login" className="px-7 py-3 rounded-full font-bold text-sm text-center transition-transform hover:scale-105" style={{ backgroundColor: "#F9D103", color: "var(--on-yellow)" }}>
                 Login
               </Link>
-              <Link to="/register" className="px-7 py-3 rounded-full font-bold text-sm text-center transition-transform hover:scale-105" style={{ backgroundColor: "#F9D103", color: "#2D2926" }}>
+              <Link to="/register" className="px-7 py-3 rounded-full font-bold text-sm text-center transition-transform hover:scale-105" style={{ backgroundColor: "#F9D103", color: "var(--on-yellow)" }}>
                 Sign up
               </Link>
             </div>
@@ -42,12 +42,12 @@ export default function Home() {
       </section>
 
       {/* Feature strip */}
-      <section className="w-full" style={{ backgroundColor: "#FFFFFF" }}>
+      <section className="w-full" style={{ backgroundColor: "var(--white)" }}>
         <div className="mx-auto max-w-6xl px-6 py-16">
-          <h2 className="text-center font-bold text-3xl sm:text-4xl mb-3" style={{ color: "#2D2926", fontFamily: "Poppins" }}>
+          <h2 className="text-center font-bold text-3xl sm:text-4xl mb-3" style={{ color: "var(--text)", fontFamily: "Poppins" }}>
             A safer, more organized alternative to the paper notebook
           </h2>
-          <p className="text-center text-base max-w-2xl mx-auto mb-12" style={{ color: "#6B6357" }}>
+          <p className="text-center text-base max-w-2xl mx-auto mb-12" style={{ color: "var(--text-muted)" }}>
             FIA'O doesn't change how you work — it digitalizes the familiar fiado process, making it more organized, secure, accessible, and easier to manage.
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -59,12 +59,12 @@ export default function Home() {
               { icon: ShieldCheck, title: "Security", desc: "Customer and transaction information stored digitally with greater protection." },
               { icon: Smartphone, title: "Mobile App (Phase 3)", desc: "Payment notifications, mobility, and offline functionality on the way." },
             ].map((f) => (
-              <div key={f.title} className="p-6 rounded-2xl border" style={{ backgroundColor: "#FFFBEB", borderColor: "#F3E9C8" }}>
+              <div key={f.title} className="p-6 rounded-2xl border" style={{ backgroundColor: "var(--surface)", borderColor: "var(--border-cream)" }}>
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4" style={{ backgroundColor: "#B91C1C" }}>
                   <f.icon className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="font-bold text-lg mb-2" style={{ color: "#2D2926" }}>{f.title}</h3>
-                <p className="text-sm leading-relaxed" style={{ color: "#6B6357" }}>{f.desc}</p>
+                <h3 className="font-bold text-lg mb-2" style={{ color: "var(--text)" }}>{f.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{f.desc}</p>
               </div>
             ))}
           </div>
@@ -72,12 +72,12 @@ export default function Home() {
       </section>
 
       {/* CRUD section */}
-      <section className="w-full" style={{ backgroundColor: "#FFFDF0" }}>
+      <section className="w-full" style={{ backgroundColor: "var(--surface-alt)" }}>
         <div className="mx-auto max-w-6xl px-6 py-16">
-          <h2 className="text-center font-bold text-3xl sm:text-4xl mb-3" style={{ color: "#2D2926", fontFamily: "Poppins" }}>
+          <h2 className="text-center font-bold text-3xl sm:text-4xl mb-3" style={{ color: "var(--text)", fontFamily: "Poppins" }}>
             Everything you need, built around four operations
           </h2>
-          <p className="text-center text-base max-w-2xl mx-auto mb-12" style={{ color: "#6B6357" }}>
+          <p className="text-center text-base max-w-2xl mx-auto mb-12" style={{ color: "var(--text-muted)" }}>
             Create, Read, Update, and Delete — the foundation of how FIA'O keeps your credit organized.
           </p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -87,12 +87,12 @@ export default function Home() {
               { op: "Update", desc: "Register payments, modify debt info, and update inventory." },
               { op: "Delete", desc: "Remove records when necessary, with confirmation before deletion." },
             ].map((c, i) => (
-              <div key={c.op} className="p-6 rounded-2xl text-center" style={{ backgroundColor: "#FFFFFF", border: "1px solid #F0E6C5" }}>
-                <div className="w-12 h-12 rounded-full mx-auto flex items-center justify-center font-bold text-lg mb-3" style={{ backgroundColor: "#F9D103", color: "#2D2926" }}>
+              <div key={c.op} className="p-6 rounded-2xl text-center" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
+                <div className="w-12 h-12 rounded-full mx-auto flex items-center justify-center font-bold text-lg mb-3" style={{ backgroundColor: "#F9D103", color: "var(--on-yellow)" }}>
                   {i + 1}
                 </div>
-                <h3 className="font-bold text-lg mb-1.5" style={{ color: "#B91C1C" }}>{c.op}</h3>
-                <p className="text-sm" style={{ color: "#6B6357" }}>{c.desc}</p>
+                <h3 className="font-bold text-lg mb-1.5" style={{color: "var(--accent-text)" }}>{c.op}</h3>
+                <p className="text-sm" style={{ color: "var(--text-muted)" }}>{c.desc}</p>
               </div>
             ))}
           </div>
@@ -100,9 +100,9 @@ export default function Home() {
       </section>
 
       {/* Roadmap */}
-      <section className="w-full" style={{ backgroundColor: "#FFFFFF" }}>
+      <section className="w-full" style={{ backgroundColor: "var(--white)" }}>
         <div className="mx-auto max-w-6xl px-6 py-16">
-          <h2 className="text-center font-bold text-3xl sm:text-4xl mb-12" style={{ color: "#2D2926", fontFamily: "Poppins" }}>
+          <h2 className="text-center font-bold text-3xl sm:text-4xl mb-12" style={{ color: "var(--text)", fontFamily: "Poppins" }}>
             Our development roadmap
           </h2>
           <div className="grid lg:grid-cols-3 gap-6">
@@ -111,12 +111,12 @@ export default function Home() {
               { phase: "Phase 2", title: "Website", desc: "Launch of a responsive platform for management through computers and tablets.", done: true },
               { phase: "Phase 3", title: "Mobile Application", desc: "A mobile app with payment notifications, mobility, and offline functionality.", done: false },
             ].map((p) => (
-              <div key={p.phase} className="p-6 rounded-2xl" style={{ backgroundColor: "#FFFBEB", border: "1px solid #F3E9C8" }}>
-                <span className="inline-block px-3 py-1 rounded-full text-xs font-bold mb-3" style={{ backgroundColor: p.done ? "#B91C1C" : "#E0D6B8", color: "#FFFFFF" }}>
+              <div key={p.phase} className="p-6 rounded-2xl" style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border-cream)" }}>
+                <span className="inline-block px-3 py-1 rounded-full text-xs font-bold mb-3" style={{ backgroundColor: p.done ? "#B91C1C" : "var(--border-cream)", color: "#FFFFFF" }}>
                   {p.done ? "Current" : "Upcoming"}
                 </span>
-                <h3 className="font-bold text-xl mb-1" style={{ color: "#2D2926" }}>{p.phase} — {p.title}</h3>
-                <p className="text-sm" style={{ color: "#6B6357" }}>{p.desc}</p>
+                <h3 className="font-bold text-xl mb-1" style={{ color: "var(--text)" }}>{p.phase} — {p.title}</h3>
+                <p className="text-sm" style={{ color: "var(--text-muted)" }}>{p.desc}</p>
               </div>
             ))}
           </div>
@@ -132,7 +132,7 @@ export default function Home() {
           <p className="text-white/90 mb-8 max-w-xl mx-auto">
             Join the mini-supermarket owners digitalizing their fiado with FIA'O.
           </p>
-          <Link to="/register" className="inline-block px-8 py-3.5 rounded-full font-bold text-sm transition-transform hover:scale-105" style={{ backgroundColor: "#F9D103", color: "#2D2926" }}>
+          <Link to="/register" className="inline-block px-8 py-3.5 rounded-full font-bold text-sm transition-transform hover:scale-105" style={{ backgroundColor: "#F9D103", color: "var(--on-yellow)" }}>
             Get started — it's free
           </Link>
         </div>

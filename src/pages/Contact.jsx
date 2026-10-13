@@ -29,19 +29,19 @@ const FAQS = [
 function FaqItem({ item }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#FFFFFF", border: "1px solid #F0E6C5" }}>
+    <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-5 py-4 text-left"
       >
-        <span className="font-semibold text-sm sm:text-base" style={{ color: "#2D2926" }}>{item.q}</span>
-        <span className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ml-3" style={{ backgroundColor: "#FFFBEB" }}>
-          <Plus className={`w-4 h-4 transition-transform ${open ? "rotate-45" : ""}`} style={{ color: "#B91C1C" }} />
+        <span className="font-semibold text-sm sm:text-base" style={{ color: "var(--text)" }}>{item.q}</span>
+        <span className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ml-3" style={{ backgroundColor: "var(--surface)" }}>
+          <Plus className={`w-4 h-4 transition-transform ${open ? "rotate-45" : ""}`} style={{color: "var(--accent-text)" }} />
         </span>
       </button>
       {open && (
         <div className="px-5 pb-4">
-          <p className="text-sm leading-relaxed" style={{ color: "#6B6357" }}>{item.a}</p>
+          <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{item.a}</p>
         </div>
       )}
     </div>
@@ -62,7 +62,7 @@ export default function Contact() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#B91C1C" }}>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "var(--page-bg)" }}>
       <Navbar />
 
       <main className="flex-1">
@@ -86,22 +86,22 @@ export default function Contact() {
             </div>
 
             {/* Contact form */}
-            <div className="rounded-3xl p-6 sm:p-8" style={{ backgroundColor: "#FFFFFF", boxShadow: "0 10px 30px rgba(0,0,0,0.1)" }}>
-              <h2 className="font-bold text-xl mb-5" style={{ color: "#2D2926" }}>Send us a message</h2>
+            <div className="rounded-3xl p-6 sm:p-8" style={{ backgroundColor: "var(--white)", boxShadow: "0 10px 30px rgba(0,0,0,0.1)" }}>
+              <h2 className="font-bold text-xl mb-5" style={{ color: "var(--text)" }}>Send us a message</h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="text-xs font-semibold block mb-1.5" style={{ color: "#6B6357" }}>NAME</label>
+                  <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--text-muted)" }}>NAME</label>
                   <input
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     placeholder="Your name"
                     required
                     className="w-full rounded-xl px-4 py-3 text-sm border outline-none"
-                    style={{ backgroundColor: "#FFFBEB", borderColor: "#E5DDB8", color: "#2D2926" }}
+                    style={{ backgroundColor: "var(--surface)", borderColor: "var(--border-cream)", color: "var(--text)" }}
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold block mb-1.5" style={{ color: "#6B6357" }}>EMAIL</label>
+                  <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--text-muted)" }}>EMAIL</label>
                   <input
                     type="email"
                     value={form.email}
@@ -109,11 +109,11 @@ export default function Contact() {
                     placeholder="yourcorreo@example.com"
                     required
                     className="w-full rounded-xl px-4 py-3 text-sm border outline-none"
-                    style={{ backgroundColor: "#FFFBEB", borderColor: "#E5DDB8", color: "#2D2926" }}
+                    style={{ backgroundColor: "var(--surface)", borderColor: "var(--border-cream)", color: "var(--text)" }}
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold block mb-1.5" style={{ color: "#6B6357" }}>MESSAGE</label>
+                  <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--text-muted)" }}>MESSAGE</label>
                   <textarea
                     value={form.message}
                     onChange={(e) => setForm({ ...form, message: e.target.value })}
@@ -121,7 +121,7 @@ export default function Contact() {
                     required
                     rows={5}
                     className="w-full rounded-xl px-4 py-3 text-sm border outline-none resize-none"
-                    style={{ backgroundColor: "#FFFBEB", borderColor: "#E5DDB8", color: "#2D2926" }}
+                    style={{ backgroundColor: "var(--surface)", borderColor: "var(--border-cream)", color: "var(--text)" }}
                   />
                 </div>
                 <button
@@ -137,7 +137,7 @@ export default function Contact() {
         </div>
 
         {/* Floating chat */}
-        <button className="fixed bottom-6 right-6 w-14 h-14 rounded-full flex items-center justify-center shadow-xl z-50 transition-transform hover:scale-110" style={{ backgroundColor: "#2D2926" }}>
+        <button className="fixed bottom-6 right-6 w-14 h-14 rounded-full flex items-center justify-center shadow-xl z-50 transition-transform hover:scale-110" style={{ backgroundColor: "var(--btn-solid)" }}>
           <MessageCircle className="w-6 h-6 text-white" />
         </button>
       </main>
