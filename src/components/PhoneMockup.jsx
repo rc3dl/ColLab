@@ -16,15 +16,21 @@ export default function PhoneMockup() {
         {/* Screen */}
         <div className="rounded-[2rem] overflow-hidden" style={{ backgroundColor: "#FFFFFF", height: "540px" }}>
           {/* Notch */}
-          <div className="relative flex justify-center pt-2">
+          <div className="relative flex justify-center ">
             <div className="absolute top-1.5 w-20 h-1.5 rounded-full bg-black/80" />
           </div>
 
           {/* App header */}
           <div className="px-5 pt-6 pb-4" style={{ backgroundColor: "#B91C1C" }}>
             <div className="flex items-center justify-between">
-          <img src="/Logo-fiao-120x40.svg" alt="FIA'O" className="h-6 w-auto" />
-              <div className="w-7 h-7 rounded-full bg-white/20" />
+          <img src="/Logo-fiao-120x40.svg" alt="FIA'O" className="h-6 w-auto -ml-4" />
+             <div className="w-7 h-7 rounded-full bg-white/20 overflow-hidden">
+  <img
+    src="https://pbs.twimg.com/profile_images/1390905138303234050/_UOSnquT_400x400.jpg"
+    alt="Perfil"
+    className="w-full h-full object-cover"
+  />
+</div>
             </div>
             <p className="text-white text-sm mt-3 font-medium">Good morning, John 👋</p>
             <p className="text-white/70 text-[11px]">Total balance to collect</p>
