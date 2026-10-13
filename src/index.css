@@ -89,4 +89,25 @@
   body {
     @apply bg-background text-foreground font-body;
   }
+}:root {
+  --page-bg: #B91C1C;      --navbar-bg: #B91C1C;
+  --surface: #FFFBEB;      --surface-alt: #FFFDF0;     --white: #FFFFFF;
+  --text: #2D2926;         --text-muted: #6B6357;      --text-faint: #9A8F7A;
+  --accent-text: #B91C1C;  --on-yellow: #2D2926;       --btn-solid: #2D2926;
+  --border-cream: #F0E6C5;
+  --ok-bg: #D1FAE5;   --ok-text: #065F46;
+  --warn-bg: #FEF3C7; --warn-text: #92400E;
+  --bad-bg: #FEE2E2;  --bad-text: #991B1B;
+}
+
+.dark {
+  color-scheme: dark;
+  --page-bg: #1B1614;      --navbar-bg: #7A1818;
+  --surface: #27201C;      --surface-alt: #221B18;     --white: #352C27;
+  --text: #F2E9DA;         --text-muted: #CBBDA6;      --text-faint: #A89B86;
+  --accent-text: #F0897F;  --on-yellow: #2D2926;       --btn-solid: #B91C1C;
+  --border-cream: #403631;
+  --ok-bg: #143D2E;   --ok-text: #86E0B7;
+  --warn-bg: #4A3512; --warn-text: #F2C766;
+  --bad-bg: #4D2020;  --bad-text: #F4A6A6;
 }
