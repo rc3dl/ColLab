@@ -223,9 +223,9 @@ export default function Clients() {
               <h2 className="font-semibold text-lg mb-2" style={{ color: "var(--text)" }}>
                 Each client, with a clear account
               </h2>
-              <p className="text-sm max-w-lg" style={{ color: "var(--text-muted)" }}>
-                Register your customers in seconds and see at a glance who is up to date, who owes, and who to remind.
-              </p>
+              <p className="text-sm max-w-lg text-white/80">
+  Register your customers in seconds and see at a glance who is up to date, who owes, and who to remind.
+</p>
             </div>
             <button
               onClick={() => setModal({ client: null })}
