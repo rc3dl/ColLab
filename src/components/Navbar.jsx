@@ -122,7 +122,22 @@ export default function Navbar() {
                   {item.label}
                 </Link>
               );
-            })}
+            })}<Link
+  to="/profile"
+  onClick={() => setOpen(false)}
+  className="px-4 py-2.5 rounded-full text-sm font-semibold text-center flex items-center justify-center gap-2"
+  style={{
+    backgroundColor: location.pathname === "/profile"
+      ? "#F9D103"
+      : "rgba(255,255,255,0.08)",
+    color: location.pathname === "/profile"
+      ? "#2D2926"
+      : "#FFFFFF",
+  }}
+>
+  <UserCircle className="w-4 h-4" />
+  Profile
+</Link>
           </div>
         )}
       </div>
