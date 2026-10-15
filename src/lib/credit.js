@@ -216,3 +216,19 @@ export function percentUsed(balance, limit) {
   if (l <= 0) return 100;
   return Math.min(100, Math.round((b * 100) / l));
 }
+// Clientes que deben, primero los vencidos y luego los de mayor deuda.
+export function rankDebtors(clients) {
+  return clients
+    .filter((c) => c.balance > 0)
+    .sort((a, b) => (b.overdue > 0) - (a.overdue > 0) || b.balance - a.balance);
+}
+
+// ¿Al producto le queda poco (o nada)? Stock igual o menor que su mínimo.
+export function isLowStock(product) {
+  return Number(product.stock) <= Number(product.min_stock);
+}
+
+// "Graciela Moreno" -> "Graciela"
+export function firstName(fullName) {
+  return (fullName || "").trim().split(/\s+/)[0] || "";
+}
