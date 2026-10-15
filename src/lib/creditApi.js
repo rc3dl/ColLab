@@ -31,7 +31,7 @@ export async function fetchSettings() {
 // Todo lo que necesita la pantalla Credit en una sola carga.
 export async function fetchLedger() {
   const [clientsRes, entriesRes, settings] = await Promise.all([
-    supabase.from("clients").select("id, name, phone, credit_limit, archived").order("name"),
+   supabase.from("clients").select("id, name, phone, credit_limit, archived, created_at").order("name"),
     supabase
       .from("credit_entries")
       .select("id, client_id, kind, amount, description, due_date, created_at")

@@ -1,29 +1,25 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Calendar, Moon, FileText, FileSpreadsheet, TrendingUp, TrendingDown, Users, Wallet } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { TrendingUp, Banknote, Users, AlertTriangle, FileText, FileSpreadsheet, ChevronLeft, ChevronRight } from "lucide-react";
+import { fetchLedger } from "@/lib/creditApi";
+import { money, todayPanama, shortYmd } from "@/lib/credit";
+import { PRESETS, presetRange, buildReport, filterLabel, paginate, pageWindow, reportTables } from "@/lib/reports";
+import { exportExcel, exportPdf } from "@/lib/reportExport";
 
-const CHART_DATA = [
-  { week: "Week 1", "Credit issued": 320, "Payments Received": 280, Overdue: 40 },
-  { week: "Week 2", "Credit issued": 410, "Payments Received": 360, Overdue: 50 },
-  { week: "Week 3", "Credit issued": 380, "Payments Received": 420, Overdue: 30 },
-  { week: "Week 4", "Credit issued": 450, "Payments Received": 390, Overdue: 60 },
-];
-
-const TRANSACTIONS = [
-  { name: "Maria Goméz", desc: "Grocery items & supplies", amount: "B/.45.00", date: "2026-07-28", status: "On Time" },
-  { name: "Carlos Mendoza", desc: "Weekly hardware credit", amount: "B/.120.00", date: "2026-07-25", status: "Pending" },
-  { name: "Ana Ruiz", desc: "Bakery stock order", amount: "B/.85.50", date: "2026-07-18", status: "Overdue" },
-];
+const card = { backgroundColor: "var(--surface)" };
+const fieldStyle = { backgroundColor: "var(--white)", borderColor: "var(--border-cream)", color: "var(--text)" };
+const BREAKDOWN_COLORS = { Paid: "#059669", Pending: "#F9D103", Overdue: "#B91C1C" };
 
 function StatusBadge({ status }) {
   const map = {
-    "On Time": { bg: "var(--ok-bg)", color: "var(--ok-text)" },
+    Paid: { bg: "var(--ok-bg)", color: "var(--ok-text)" },
     Pending: { bg: "var(--warn-bg)", color: "var(--warn-text)" },
     Overdue: { bg: "var(--bad-bg)", color: "var(--bad-text)" },
   };
-  const s = map[status];
+  const s = map[status] || map.Pending;
   return (
     <span className="px-2.5 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: s.bg, color: s.color }}>
       {status}
@@ -31,8 +27,77 @@ function StatusBadge({ status }) {
   );
 }
 
+// Texto del cambio porcentual con color: "good" cuando subir es bueno (cobros) y "bad" cuando subir es malo (deuda).
+function Change({ change, suffix, upIsGood }) {
+  const { pct, label } = change;
+  let color = "var(--text-muted)";
+  if (pct === null) color = upIsGood ? "var(--ok-text)" : "var(--bad-text)";
+  else if (pct > 0) color = upIsGood ? "var(--ok-text)" : "var(--bad-text)";
+  else if (pct < 0) color = upIsGood ? "var(--bad-text)" : "var(--ok-text)";
+  return (
+    <p className="text-xs font-semibold mt-1" style={{ color }}>
+      {label}
+      {label === "No change" ? "" : ` ${suffix}`}
+    </p>
+  );
+}
+
 export default function Reports() {
+  const today = todayPanama();
+  const initial = presetRange("month", today);
+  const [draft, setDraft] = useState({ ...initial, filter: "all" });
+  const [applied, setApplied] = useState({ ...initial, filter: "all" });
   const [page, setPage] = useState(1);
+  const [formError, setFormError] = useState("");
+  const [exporting, setExporting] = useState("");
+  const [exportError, setExportError] = useState("");
+
+  const { data, isLoading, isError, error, refetch } = useQuery({ queryKey: ["reports"], queryFn: fetchLedger });
+  const clients = data?.clients ?? [];
+
+  const report = useMemo(
+    () => (data ? buildReport({ clients: data.clients, entries: data.entries, names: data.names, ...applied, today }) : null),
+    [data, applied, today]
+  );
+  const table = useMemo(() => paginate(report?.rows ?? [], page), [report, page]);
+
+  const apply = () => {
+    setFormError("");
+    if (!draft.from || !draft.to) return setFormError("Choose both dates.");
+    if (draft.from > draft.to) return setFormError("The start date must be before the end date.");
+    setApplied({ ...draft });
+    setPage(1);
+  };
+  const choosePreset = (key) => {
+    const range = presetRange(key, today);
+    setFormError("");
+    setDraft({ ...draft, ...range });
+    setApplied({ ...applied, ...range, filter: draft.filter });
+    setPage(1);
+  };
+  const activePreset = PRESETS.find((p) => {
+    const r = presetRange(p.key, today);
+    return r.from === applied.from && r.to === applied.to;
+  })?.key;
+
+  const run = async (kind) => {
+    setExportError("");
+    setExporting(kind);
+    try {
+      const tables = reportTables(report, { filterLabel: filterLabel(clients, applied.filter) });
+      const name = `fiao-report-${applied.from}-to-${applied.to}`;
+      if (kind === "excel") exportExcel(tables, `${name}.xlsx`);
+      else await exportPdf(tables, `${name}.pdf`);
+    } catch (e) {
+      setExportError(`Could not create the file: ${e.message}`);
+    } finally {
+      setExporting("");
+    }
+  };
+
+  const c = report?.cards;
+  const hasChartData = report?.chart.some((b) => b.issued || b.received || b.overdue);
+  const canExport = !!report && !exporting;
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "var(--page-bg)" }}>
@@ -40,159 +105,229 @@ export default function Reports() {
 
       <main className="flex-1">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
-          <div className="rounded-3xl p-6 sm:p-8" style={{ backgroundColor: "var(--surface)" }}>
-            {/* Title row */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
-              <div className="flex items-center gap-3">
-                <h1 className="font-bold text-2xl sm:text-3xl" style={{ color: "var(--text)", fontFamily: "Poppins" }}>
-                  FIA'O Reports
-                </h1>
-                <button className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
-                  <Calendar className="w-4 h-4" style={{ color: "var(--text)" }} />
-                </button>
-                <button className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
-                  <Moon className="w-4 h-4" style={{ color: "var(--text)" }} />
-                </button>
-              </div>
-              <div className="flex gap-2">
-                <button className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-[var(--white)]" style={{ border: "1px solid var(--text)", color: "var(--text)" }}>
-                  <FileText className="w-4 h-4" /> Export PDF
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-[var(--white)]" style={{ border: "1px solid var(--text)", color: "var(--text)" }}>
-                  <FileSpreadsheet className="w-4 h-4" /> Export Excel
-                </button>
-              </div>
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
+            <div>
+              <h1 className="text-white font-bold text-3xl sm:text-4xl" style={{ fontFamily: "Poppins" }}>FIA'O Reports</h1>
+              <p className="text-white/80 mt-2 text-sm">
+                Track credit activity, payments and overdue balances for any period.
+              </p>
             </div>
-            <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>
-              Financial tracking, credit summaries, and business analytics overview.
-            </p>
-
-            {/* Filters */}
-            <div className="grid sm:grid-cols-3 gap-3 mb-6 p-4 rounded-2xl" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
-              <div>
-                <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--text-muted)" }}>DATE RANGE</label>
-                <div className="flex gap-2">
-                  <input type="date" className="flex-1 rounded-lg px-2 py-2 text-sm border outline-none" style={{ borderColor: "var(--border-cream)", color: "var(--text)" }} />
-                  <input type="date" className="flex-1 rounded-lg px-2 py-2 text-sm border outline-none" style={{ borderColor: "var(--border-cream)", color: "var(--text)" }} />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--text-muted)" }}>CUSTOMER STATUS / NAME</label>
-                <select className="w-full rounded-lg px-3 py-2 text-sm border outline-none" style={{ backgroundColor: "var(--white)", borderColor: "var(--border-cream)", color: "var(--text)" }}>
-                  <option>All Customers (All Names)</option>
-                </select>
-              </div>
-              <div className="flex items-end">
-                <button className="w-full py-2.5 rounded-lg text-sm font-bold text-white" style={{ backgroundColor: "var(--btn-solid)" }}>
-                  Apply Filters
-                </button>
-              </div>
-            </div>
-
-            {/* Summary cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-              {[
-                { label: "TOTAL ACTIVE CREDIT", value: "B/.1,450.00", trend: "+8.4% from last month", up: true, icon: Wallet },
-                { label: "COLLECTED THIS MONTH", value: "B/.3,120.50", trend: "+12.7% efficiency", up: true, icon: TrendingUp },
-                { label: "PENDING BALANCES", value: "B/.340.00", trend: "-3 accounts overdue", up: false, icon: TrendingDown },
-                { label: "TOTAL CUSTOMERS", value: "48", trend: "+5 new this month", up: true, icon: Users },
-              ].map((s) => (
-                <div key={s.label} className="p-4 rounded-2xl" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
-                  <div className="flex items-center justify-between mb-2">
-                    <s.icon className="w-4 h-4" style={{color: "var(--accent-text)" }} />
-                  </div>
-                  <p className="text-[11px] font-semibold tracking-wide mb-1" style={{ color: "var(--text-muted)" }}>{s.label}</p>
-                  <p className="font-bold text-xl mb-1" style={{ color: "var(--text)" }}>{s.value}</p>
-                  <p className="text-xs font-semibold" style={{ color: s.up ? "#059669" : "#B91C1C" }}>{s.trend}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Charts */}
-            <div className="grid lg:grid-cols-2 gap-4 mb-6">
-              <div className="p-5 rounded-2xl" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
-                <h3 className="font-bold text-sm mb-4" style={{ color: "var(--text)" }}>Credit Activity & Payments Flow</h3>
-                <ResponsiveContainer width="100%" height={240}>
-                  <BarChart data={CHART_DATA} barGap={4}>
-                    <XAxis dataKey="week" tick={{ fontSize: 11, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12, border: "1px solid var(--border-cream)" }} />
-                    <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
-                    <Bar dataKey="Credit issued" fill="#B91C1C" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="Payments Received" fill="#F9D103" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="Overdue" fill="#FCA5A5" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="p-5 rounded-2xl" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
-                <h3 className="font-bold text-sm mb-4" style={{ color: "var(--text)" }}>Payment Status Breakdown</h3>
-                <div className="space-y-4">
-                  {[
-                    { label: "On Time", pct: 75, amount: "B/.2,340", color: "#10B981" },
-                    { label: "Pending", pct: 17, amount: "B/.540", color: "#F9D103" },
-                    { label: "Overdue", pct: 8, amount: "B/.240", color: "#EF4444" },
-                  ].map((b) => (
-                    <div key={b.label}>
-                      <div className="flex justify-between text-sm mb-1.5">
-                        <span className="font-semibold" style={{ color: "var(--text)" }}>{b.label} ({b.pct}%)</span>
-                        <span style={{ color: "var(--text-muted)" }}>{b.amount}</span>
-                      </div>
-                      <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: "var(--border-cream)" }}>
-                        <div className="h-full rounded-full" style={{ width: `B/.{b.pct}%`, backgroundColor: b.color }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Transactions table */}
-            <div className="p-5 rounded-2xl" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
-              <h3 className="font-bold text-sm mb-4" style={{ color: "var(--text)" }}>Recent Credit Transactions</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="text-left text-xs font-semibold tracking-wide" style={{ color: "var(--text-faint)", borderBottom: "1px solid var(--border-cream)" }}>
-                      <th className="pb-3 pr-3">Customer Name</th>
-                      <th className="pb-3 pr-3">Description</th>
-                      <th className="pb-3 pr-3">Amount</th>
-                      <th className="pb-3 pr-3">Date</th>
-                      <th className="pb-3">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {TRANSACTIONS.map((t) => (
-                      <tr key={t.name} style={{ borderBottom: "1px solid var(--border-cream)" }}>
-                        <td className="py-3 pr-3 text-sm font-semibold" style={{ color: "var(--text)" }}>{t.name}</td>
-                        <td className="py-3 pr-3 text-sm" style={{ color: "var(--text-muted)" }}>{t.desc}</td>
-                        <td className="py-3 pr-3 text-sm font-bold" style={{color: "var(--accent-text)" }}>{t.amount}</td>
-                        <td className="py-3 pr-3 text-sm" style={{ color: "var(--text-muted)" }}>{t.date}</td>
-                        <td className="py-3"><StatusBadge status={t.status} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {/* Pagination */}
-              <div className="flex justify-center gap-2 mt-5">
-                {[1, 2, 3].map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setPage(n)}
-                    className="w-8 h-8 rounded-full text-sm font-semibold transition"
-                    style={{
-                      backgroundColor: page === n ? "#B91C1C" : "var(--surface)",
-                      color: page === n ? "#FFFFFF" : "var(--text)",
-                      border: "1px solid var(--border-cream)",
-                    }}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
+            <div className="flex flex-wrap gap-2">
+              <button onClick={() => run("pdf")} disabled={!canExport}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold disabled:opacity-60" style={{ backgroundColor: "var(--white)", color: "var(--text)" }}>
+                <FileText className="w-4 h-4" /> {exporting === "pdf" ? "Creating..." : "Export PDF"}
+              </button>
+              <button onClick={() => run("excel")} disabled={!canExport}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold disabled:opacity-60" style={{ backgroundColor: "#F9D103", color: "var(--on-yellow)" }}>
+                <FileSpreadsheet className="w-4 h-4" /> {exporting === "excel" ? "Creating..." : "Export Excel"}
+              </button>
             </div>
           </div>
+
+          {exportError && (
+            <p role="alert" className="text-sm rounded-xl px-4 py-3 mb-4" style={{ backgroundColor: "var(--bad-bg)", color: "var(--bad-text)" }}>{exportError}</p>
+          )}
+
+          {/* Filters */}
+          <div className="rounded-2xl p-5 mb-6" style={card}>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {PRESETS.map((p) => (
+                <button key={p.key} onClick={() => choosePreset(p.key)} className="px-4 py-1.5 rounded-full text-sm font-semibold"
+                  style={{ backgroundColor: activePreset === p.key ? "#B91C1C" : "var(--white)", color: activePreset === p.key ? "#FFFFFF" : "var(--text)", border: "1px solid var(--border-cream)" }}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+              <label className="block">
+                <span className="text-xs font-semibold block mb-1.5" style={{ color: "var(--text-muted)" }}>FROM</span>
+                <input type="date" max={today} value={draft.from} onChange={(e) => setDraft({ ...draft, from: e.target.value })} className="w-full rounded-xl px-4 py-2.5 text-sm border outline-none" style={fieldStyle} />
+              </label>
+              <label className="block">
+                <span className="text-xs font-semibold block mb-1.5" style={{ color: "var(--text-muted)" }}>TO</span>
+                <input type="date" max={today} value={draft.to} onChange={(e) => setDraft({ ...draft, to: e.target.value })} className="w-full rounded-xl px-4 py-2.5 text-sm border outline-none" style={fieldStyle} />
+              </label>
+              <label className="block">
+                <span className="text-xs font-semibold block mb-1.5" style={{ color: "var(--text-muted)" }}>CUSTOMERS</span>
+                <select value={draft.filter} onChange={(e) => setDraft({ ...draft, filter: e.target.value })} className="w-full rounded-xl px-4 py-2.5 text-sm border outline-none" style={fieldStyle}>
+                  <option value="all">All customers</option>
+                  <optgroup label="By status">
+                    <option value="status:On Time">On Time</option>
+                    <option value="status:Pending">Pending</option>
+                    <option value="status:Overdue">Overdue</option>
+                  </optgroup>
+                  <optgroup label="One customer">
+                    {clients.map((cl) => (
+                      <option key={cl.id} value={`client:${cl.id}`}>{cl.name}</option>
+                    ))}
+                  </optgroup>
+                </select>
+              </label>
+              <button onClick={apply} className="py-2.5 rounded-full text-sm font-bold text-white" style={{ backgroundColor: "#B91C1C" }}>Apply Filters</button>
+            </div>
+            {formError && <p role="alert" className="text-sm mt-3" style={{ color: "var(--bad-text)" }}>{formError}</p>}
+          </div>
+
+          {isLoading ? (
+            <p className="text-center text-white/80 py-16">Loading your reports...</p>
+          ) : isError ? (
+            <div className="text-center py-16">
+              <p className="text-white mb-4">Could not load the data: {error.message}</p>
+              <button onClick={() => refetch()} className="px-5 py-2 rounded-full text-sm font-bold" style={{ backgroundColor: "#F9D103", color: "var(--on-yellow)" }}>Try again</button>
+            </div>
+          ) : (
+            <>
+              <p className="text-white/80 text-sm mb-4">
+                {shortYmd(report.range.from)} – {shortYmd(report.range.to)} · {filterLabel(clients, applied.filter)}
+              </p>
+
+              {/* Stat cards */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+                <div className="p-4 rounded-2xl" style={card}>
+                  <TrendingUp className="w-5 h-5 mb-2" style={{ color: "var(--accent-text)" }} />
+                  <p className="text-[11px] font-semibold tracking-wide" style={{ color: "var(--text-muted)" }}>TOTAL ACTIVE CREDIT</p>
+                  <p className="font-bold text-xl" style={{ color: "var(--text)" }}>{money(c.activeCredit)}</p>
+                  <Change change={c.activeCreditChange} suffix="since the start of the period" upIsGood={false} />
+                </div>
+                <div className="p-4 rounded-2xl" style={card}>
+                  <Banknote className="w-5 h-5 mb-2" style={{ color: "#059669" }} />
+                  <p className="text-[11px] font-semibold tracking-wide" style={{ color: "var(--text-muted)" }}>COLLECTED IN PERIOD</p>
+                  <p className="font-bold text-xl" style={{ color: "var(--text)" }}>{money(c.collected)}</p>
+                  <Change change={c.collectedChange} suffix="vs previous period" upIsGood />
+                </div>
+                <div className="p-4 rounded-2xl" style={card}>
+                  <AlertTriangle className="w-5 h-5 mb-2" style={{ color: "var(--accent-text)" }} />
+                  <p className="text-[11px] font-semibold tracking-wide" style={{ color: "var(--text-muted)" }}>PENDING BALANCES</p>
+                  <p className="font-bold text-xl" style={{ color: "var(--text)" }}>{money(c.pending)}</p>
+                  <p className="text-xs font-semibold mt-1" style={{ color: c.overdueCustomers > 0 ? "var(--bad-text)" : "var(--ok-text)" }}>
+                    {c.overdueCustomers > 0
+                      ? `${c.overdueCustomers} ${c.overdueCustomers === 1 ? "account" : "accounts"} overdue (${money(c.overdueAmount)})`
+                      : "Nothing overdue"}
+                  </p>
+                </div>
+                <div className="p-4 rounded-2xl" style={card}>
+                  <Users className="w-5 h-5 mb-2" style={{ color: "var(--text)" }} />
+                  <p className="text-[11px] font-semibold tracking-wide" style={{ color: "var(--text-muted)" }}>TOTAL CUSTOMERS</p>
+                  <p className="font-bold text-xl" style={{ color: "var(--text)" }}>{c.customers}</p>
+                  <p className="text-xs font-semibold mt-1" style={{ color: "var(--text-muted)" }}>
+                    {c.newCustomers > 0 ? `+${c.newCustomers} new in this period` : "No new customers"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid lg:grid-cols-3 gap-5 mb-6">
+                {/* Chart */}
+                <div className="lg:col-span-2 rounded-2xl p-5" style={card}>
+                  <h2 className="font-bold text-lg mb-1" style={{ color: "var(--text)" }}>Credit activity & payments</h2>
+                  <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>Credit issued, payments received and overdue balances in the period.</p>
+                  {hasChartData ? (
+                    <div style={{ width: "100%", height: 280 }}>
+                      <ResponsiveContainer>
+                        <BarChart data={report.chart} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-cream)" />
+                          <XAxis dataKey="label" tick={{ fill: "var(--text-muted)", fontSize: 11 }} />
+                          <YAxis tick={{ fill: "var(--text-muted)", fontSize: 11 }} width={48} />
+                          <Tooltip formatter={(v) => money(v)} contentStyle={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)", borderRadius: 12, color: "var(--text)" }} />
+                          <Legend wrapperStyle={{ fontSize: 12 }} />
+                          <Bar dataKey="issued" name="Credit issued" fill="#B91C1C" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="received" name="Payments received" fill="#F9D103" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="overdue" name="Overdue" fill="#FCA5A5" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <p className="py-16 text-center text-sm" style={{ color: "var(--text-faint)" }}>No activity in this period.</p>
+                  )}
+                </div>
+
+                {/* Breakdown */}
+                <div className="rounded-2xl p-5" style={card}>
+                  <h2 className="font-bold text-lg mb-1" style={{ color: "var(--text)" }}>Credit status</h2>
+                  <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>What happened to the credit issued in the period ({money(report.issued)}).</p>
+                  {report.issued > 0 ? (
+                    <div className="space-y-4">
+                      {report.breakdown.map((b) => (
+                        <div key={b.key}>
+                          <div className="flex justify-between text-sm mb-1.5">
+                            <span className="font-semibold" style={{ color: "var(--text)" }}>{b.key}</span>
+                            <span style={{ color: "var(--text-muted)" }}>{b.pct}% · {money(b.amount)}</span>
+                          </div>
+                          <div className="h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--border-cream)" }}>
+                            <div className="h-full rounded-full" style={{ width: `${b.pct}%`, backgroundColor: BREAKDOWN_COLORS[b.key] }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="py-10 text-center text-sm" style={{ color: "var(--text-faint)" }}>No credit issued in this period.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Transactions */}
+              <div className="rounded-2xl p-5" style={card}>
+                <h2 className="font-bold text-lg mb-4" style={{ color: "var(--text)" }}>Transactions</h2>
+                {table.total === 0 ? (
+                  <p className="py-8 text-center text-sm" style={{ color: "var(--text-faint)" }}>No transactions in this period.</p>
+                ) : (
+                  <>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="text-left text-xs font-semibold tracking-wide" style={{ color: "var(--text-faint)", borderBottom: "1px solid var(--border-cream)" }}>
+                            <th className="pb-3 pr-3">CUSTOMER</th>
+                            <th className="pb-3 pr-3">DESCRIPTION</th>
+                            <th className="pb-3 pr-3">AMOUNT</th>
+                            <th className="pb-3 pr-3">DATE</th>
+                            <th className="pb-3">STATUS</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {table.items.map((t) => (
+                            <tr key={t.id} style={{ borderBottom: "1px solid var(--border-cream)" }}>
+                              <td className="py-3 pr-3 text-sm font-semibold" style={{ color: "var(--text)" }}>{t.name}</td>
+                              <td className="py-3 pr-3 text-sm" style={{ color: "var(--text-muted)" }}>{t.description}</td>
+                              <td className="py-3 pr-3 text-sm font-bold whitespace-nowrap" style={{ color: t.kind === "pago" ? "var(--ok-text)" : "var(--text)" }}>
+                                {t.kind === "pago" ? "− " : ""}{money(t.amount)}
+                              </td>
+                              <td className="py-3 pr-3 text-sm whitespace-nowrap" style={{ color: "var(--text-muted)" }}>{shortYmd(t.date)}</td>
+                              <td className="py-3"><StatusBadge status={t.status} /></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
+                      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                        Showing {table.from}–{table.to} of {table.total}
+                      </p>
+                      {table.pages > 1 && (
+                        <div className="flex items-center gap-1.5">
+                          <button aria-label="Previous page" onClick={() => setPage(table.page - 1)} disabled={table.page === 1}
+                            className="w-8 h-8 rounded-full flex items-center justify-center border disabled:opacity-40" style={fieldStyle}>
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          {pageWindow(table.page, table.pages).map((n) => (
+                            <button key={n} onClick={() => setPage(n)} aria-current={n === table.page ? "page" : undefined}
+                              className="w-8 h-8 rounded-full text-sm font-semibold"
+                              style={{ backgroundColor: n === table.page ? "#B91C1C" : "var(--white)", color: n === table.page ? "#FFFFFF" : "var(--text)", border: "1px solid var(--border-cream)" }}>
+                              {n}
+                            </button>
+                          ))}
+                          <button aria-label="Next page" onClick={() => setPage(table.page + 1)} disabled={table.page === table.pages}
+                            className="w-8 h-8 rounded-full flex items-center justify-center border disabled:opacity-40" style={fieldStyle}>
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </main>
 
