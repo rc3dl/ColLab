@@ -1,21 +1,25 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { ChevronDown, ArrowRight, ShoppingCart, Banknote, TrendingUp, Users, AlertTriangle } from "lucide-react";
-
-const DEBT_HISTORY = [
-  { date: "14 JUL", icon: ShoppingCart, desc: "Milk (2) Fiado", amount: "B/. 8.00", status: "Pending" },
-  { date: "12 JUL", icon: ShoppingCart, desc: "Rice (5 lb) Fiado", amount: "B/. 4.75", status: "Pending" },
-  { date: "10 JUL", icon: Banknote, desc: "Partial payment", amount: "B/. 15.00", status: "Paid" },
-  { date: "08 JUL", icon: ShoppingCart, desc: "Bread (3) Fiado", amount: "B/. 4.50", status: "Paid" },
-  { date: "05 JUL", icon: ShoppingCart, desc: "Sugar (2 lb) Fiado", amount: "B/. 1.70", status: "Pending" },
-];
-
-const ACTIVITY = [
-  { text: "Ramón Batista, Paid B/. 15.00", time: "Today" },
-  { text: "Yolanda Pérez, New debt B/. 12.00", time: "Today" },
-  { text: "Carlos Ruiz, Paid B/. 32.50", time: "Yesterday" },
-];
+import { ChevronDown, ShoppingCart, Banknote, TrendingUp, Users, AlertTriangle } from "lucide-react";
+import { fetchLedger, addFiado, addPayment, saveAutoBlock, LEDGER_KEYS } from "@/lib/creditApi";
+import {
+  money,
+  parseAmount,
+  effectiveLimit,
+  checkFiado,
+  checkPayment,
+  addDays,
+  todayPanama,
+  relativeDay,
+  shortDate,
+  shortYmd,
+  annotateEntries,
+  summarize,
+  percentUsed,
+} from "@/lib/credit";
 
 function StatusBadge({ status }) {
   const map = {
@@ -31,13 +35,119 @@ function StatusBadge({ status }) {
   );
 }
 
-export default function Credit() {
-  const [customer, setCustomer] = useState("Ramón Batista");
-  const [payment, setPayment] = useState("B/. 0.00");
-  const [paymentType, setPaymentType] = useState("partial");
-  const [autoBlock, setAutoBlock] = useState(true);
+// Mensaje de éxito o de error debajo de un formulario.
+function Note({ note }) {
+  if (!note) return null;
+  const ok = note.type === "ok";
+  return (
+    <p
+      role={ok ? "status" : "alert"}
+      className="text-sm rounded-xl px-3 py-2 mt-3"
+      style={{ backgroundColor: ok ? "var(--ok-bg)" : "var(--bad-bg)", color: ok ? "var(--ok-text)" : "var(--bad-text)" }}
+    >
+      {note.text}
+    </p>
+  );
+}
 
-  const used = 35;
+const fieldStyle = { backgroundColor: "var(--white)", borderColor: "var(--border-cream)", color: "var(--text)" };
+
+export default function Credit() {
+  const queryClient = useQueryClient();
+  const { data, isLoading, isError, error, refetch } = useQuery({ queryKey: ["credit"], queryFn: fetchLedger });
+
+  const clients = data?.clients ?? [];
+  const entries = data?.entries ?? [];
+  const names = data?.names ?? {};
+  const settings = data?.settings ?? { default_credit_limit: 100, default_due_days: 15, auto_block: true };
+
+  const [selectedId, setSelectedId] = useState("");
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentType, setPaymentType] = useState("partial");
+  const [payNote, setPayNote] = useState(null);
+  const [fiadoAmount, setFiadoAmount] = useState("");
+  const [fiadoDesc, setFiadoDesc] = useState("");
+  const [fiadoDue, setFiadoDue] = useState("");
+  const [fiadoNote, setFiadoNote] = useState(null);
+  const [showAll, setShowAll] = useState(false);
+
+  const client = clients.find((c) => c.id === selectedId) || clients[0];
+  const today = todayPanama();
+
+  const limit = client ? effectiveLimit(client, settings) : 0;
+  const used = client ? percentUsed(client.balance, limit) : 0;
+  const defaultDue = addDays(today, settings.default_due_days);
+
+  const history = useMemo(
+    () => (client ? annotateEntries(entries.filter((e) => e.client_id === client.id)) : []),
+    [entries, client]
+  );
+  const visibleHistory = showAll ? history : history.slice(0, 8);
+  const overview = useMemo(() => summarize(clients, entries), [clients, entries]);
+
+  const refresh = () => LEDGER_KEYS.forEach((key) => queryClient.invalidateQueries({ queryKey: key }));
+
+  const fiadoMut = useMutation({
+    mutationFn: addFiado,
+    onSuccess: () => {
+      refresh();
+      setFiadoAmount("");
+      setFiadoDesc("");
+      setFiadoDue("");
+      setFiadoNote({ type: "ok", text: "Credit registered." });
+    },
+    onError: (e) => setFiadoNote({ type: "error", text: e.message }),
+  });
+  const payMut = useMutation({
+    mutationFn: addPayment,
+    onSuccess: () => {
+      refresh();
+      setPaymentAmount("");
+      setPayNote({ type: "ok", text: "Payment registered." });
+    },
+    onError: (e) => setPayNote({ type: "error", text: e.message }),
+  });
+  const blockMut = useMutation({ mutationFn: saveAutoBlock, onSuccess: refresh });
+
+  const changeClient = (id) => {
+    setSelectedId(id);
+    setPayNote(null);
+    setFiadoNote(null);
+    setShowAll(false);
+  };
+
+  const submitFiado = (e) => {
+    e.preventDefault();
+    setFiadoNote(null);
+    const amount = parseAmount(fiadoAmount);
+    const problem = checkFiado({ amount, balance: client.balance, limit, autoBlock: settings.auto_block });
+    if (problem) return setFiadoNote({ type: "error", text: problem });
+    if (fiadoDue && fiadoDue < today) return setFiadoNote({ type: "error", text: "The due date can't be in the past." });
+    fiadoMut.mutate({ client_id: client.id, amount, description: fiadoDesc, due_date: fiadoDue });
+  };
+
+  const payAmount = paymentType === "full" ? client?.balance ?? 0 : parseAmount(paymentAmount);
+
+  const submitPayment = () => {
+    setPayNote(null);
+    const problem = checkPayment({ amount: payAmount, balance: client.balance });
+    if (problem) return setPayNote({ type: "error", text: problem });
+    payMut.mutate({
+      client_id: client.id,
+      amount: payAmount,
+      description: paymentType === "full" ? "Payment in full" : "Partial payment",
+    });
+  };
+
+  const markAsPaid = () => {
+    setPayNote(null);
+    if (!(client.balance > 0)) return setPayNote({ type: "error", text: "This customer has no debt." });
+    if (window.confirm(`Mark ${client.name} as paid? This registers a payment of ${money(client.balance)}.`)) {
+      payMut.mutate({ client_id: client.id, amount: client.balance, description: "Marked as paid" });
+    }
+  };
+
+  const card = { backgroundColor: "var(--surface)" };
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "var(--page-bg)" }}>
@@ -52,180 +162,254 @@ export default function Credit() {
             <p className="text-white/80 mt-2">Track all purchases and payments for every customer.</p>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-5">
-            {/* Column 1 - Customer */}
-            <div className="space-y-5">
-              {/* Customer select */}
-              <div className="rounded-2xl p-5" style={{ backgroundColor: "var(--surface)" }}>
-                <label className="text-xs font-semibold tracking-wide block mb-2" style={{ color: "var(--text-muted)" }}>SELECT A CUSTOMER</label>
-                <div className="relative">
-                  <select
-                    value={customer}
-                    onChange={(e) => setCustomer(e.target.value)}
-                    className="w-full appearance-none rounded-xl px-4 py-3 pr-10 text-sm font-semibold border outline-none"
-                    style={{ backgroundColor: "var(--white)", borderColor: "var(--border-cream)", color: "var(--text)" }}
-                  >
-                    {["Ramón Batista", "Yolanda Pérez", "Carlos Ruiz", "Mireya Santos"].map((c) => (
-                      <option key={c}>{c}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--text-muted)" }} />
-                </div>
-              </div>
-
-              {/* Customer info card */}
-              <div className="rounded-2xl p-5" style={{ backgroundColor: "var(--surface)" }}>
-                <h2 className="font-bold text-xl mb-4" style={{ color: "var(--text)" }}>{customer}</h2>
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="rounded-xl p-3" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
-                    <p className="text-xs" style={{ color: "var(--text-muted)" }}>Current Debt</p>
-                    <p className="font-bold text-lg" style={{color: "var(--accent-text)" }}>B/. 35.00</p>
-                  </div>
-                  <div className="rounded-xl p-3" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
-                    <p className="text-xs" style={{ color: "var(--text-muted)" }}>Credit Limit</p>
-                    <p className="font-bold text-lg" style={{ color: "var(--text)" }}>B/. 100.00</p>
-                  </div>
-                </div>
-                {/* Progress bar */}
-                <div className="mb-1.5 flex justify-between text-xs" style={{ color: "var(--text-muted)" }}>
-                  <span>{used}% used</span>
-                  <span>Limit: B/. 100.00</span>
-                </div>
-                <div className="h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--border-cream)" }}>
-                  <div className="h-full rounded-full" style={{ width: `${used}%`, backgroundColor: "#B91C1C" }} />
-                </div>
-              </div>
-
-              {/* Auto blocking */}
-              <div className="rounded-2xl p-5" style={{ backgroundColor: "var(--surface)" }}>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="font-semibold text-sm mb-1" style={{ color: "var(--text)" }}>Automatic Blocking</h3>
-                    <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
-                      If a customer exceeds the debt limit, system prevents new credits.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setAutoBlock(!autoBlock)}
-                    className="relative w-11 h-6 rounded-full flex-shrink-0 transition-colors"
-                    style={{ backgroundColor: autoBlock ? "#B91C1C" : "var(--border-cream)" }}
-                  >
-                    <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform" style={{ transform: autoBlock ? "translateX(22px)" : "translateX(2px)" }} />
-                  </button>
-                </div>
-              </div>
+          {isLoading ? (
+            <p className="text-center text-white/80 py-16">Loading your notebook...</p>
+          ) : isError ? (
+            <div className="text-center py-16">
+              <p className="text-white mb-4">Could not load the data: {error.message}</p>
+              <button onClick={() => refetch()} className="px-5 py-2 rounded-full text-sm font-bold" style={{ backgroundColor: "#F9D103", color: "var(--on-yellow)" }}>
+                Try again
+              </button>
             </div>
-
-            {/* Column 2 - Debt & Payment */}
-            <div className="space-y-5">
-              {/* Debt history */}
-              <div className="rounded-2xl p-5" style={{ backgroundColor: "var(--surface)" }}>
-                <div className="flex items-center justify-between mb-1">
-                  <h2 className="font-bold text-lg" style={{ color: "var(--text)" }}>Debt History</h2>
-                </div>
-                <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>Track all purchases and payments.</p>
-                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                  {DEBT_HISTORY.map((row, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
-                      <span className="text-xs font-semibold w-12" style={{ color: "var(--text-muted)" }}>{row.date}</span>
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "var(--warn-bg)" }}>
-                        <row.icon className="w-4 h-4" style={{ color: "var(--warn-text)" }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate" style={{ color: "var(--text)" }}>{row.desc}</p>
-                      </div>
-                      <span className="text-sm font-bold" style={{ color: "var(--text)" }}>{row.amount}</span>
-                      <StatusBadge status={row.status} />
-                    </div>
-                  ))}
-                </div>
-                <button className="mt-3 text-sm font-semibold flex items-center gap-1" style={{color: "var(--accent-text)" }}>
-                  View Full History <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              {/* Register payment */}
-              <div className="rounded-2xl p-5" style={{ backgroundColor: "var(--surface)" }}>
-                <h2 className="font-bold text-lg mb-4" style={{ color: "var(--text)" }}>Register Payment</h2>
-                <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--text-muted)" }}>Payment Amount</label>
-                <input
-                  value={payment}
-                  onChange={(e) => setPayment(e.target.value)}
-                  className="w-full rounded-xl px-4 py-3 text-sm font-semibold border outline-none mb-4"
-                  style={{ backgroundColor: "var(--white)", borderColor: "var(--border-cream)", color: "var(--text)" }}
-                />
-                <label className="text-xs font-semibold block mb-2" style={{ color: "var(--text-muted)" }}>Payment Type</label>
-                <div className="grid grid-cols-2 gap-2 mb-4">
-                  {[
-                    { key: "partial", label: "Partial Payment" },
-                    { key: "full", label: "Full Payment" },
-                  ].map((opt) => (
-                    <button
-                      key={opt.key}
-                      onClick={() => setPaymentType(opt.key)}
-                      className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium border transition"
-                      style={{
-                        backgroundColor: paymentType === opt.key ? "var(--warn-bg)" : "#FFFFFF",
-                        borderColor: paymentType === opt.key ? "#F9D103" : "var(--border-cream)",
-                        color: "var(--text)",
-                      }}
+          ) : !client ? (
+            <div className="max-w-md mx-auto rounded-2xl p-8 text-center" style={card}>
+              <h2 className="font-bold text-lg mb-2" style={{ color: "var(--text)" }}>No customers yet</h2>
+              <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>
+                Add your first customer to start registering credits and payments.
+              </p>
+              <Link to="/clients" className="inline-block px-5 py-2.5 rounded-full text-sm font-bold" style={{ backgroundColor: "#F9D103", color: "var(--on-yellow)" }}>
+                Go to Clients
+              </Link>
+            </div>
+          ) : (
+            <div className="grid lg:grid-cols-3 gap-5">
+              {/* Column 1 - Customer */}
+              <div className="space-y-5">
+                <div className="rounded-2xl p-5" style={card}>
+                  <label htmlFor="customer" className="text-xs font-semibold tracking-wide block mb-2" style={{ color: "var(--text-muted)" }}>SELECT A CUSTOMER</label>
+                  <div className="relative">
+                    <select
+                      id="customer"
+                      value={client.id}
+                      onChange={(e) => changeClient(e.target.value)}
+                      className="w-full appearance-none rounded-xl px-4 py-3 pr-10 text-sm font-semibold border outline-none"
+                      style={fieldStyle}
                     >
-                      <span className="w-4 h-4 rounded-full border-2 flex items-center justify-center" style={{ borderColor: paymentType === opt.key ? "#B91C1C" : "var(--border-cream)" }}>
-                        {paymentType === opt.key && <span className="w-2 h-2 rounded-full" style={{ backgroundColor: "#B91C1C" }} />}
-                      </span>
-                      {opt.label}
+                      {clients.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--text-muted)" }} />
+                  </div>
+                </div>
+
+                <div className="rounded-2xl p-5" style={card}>
+                  <h2 className="font-bold text-xl mb-4" style={{ color: "var(--text)" }}>{client.name}</h2>
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="rounded-xl p-3" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
+                      <p className="text-xs" style={{ color: "var(--text-muted)" }}>Current Debt</p>
+                      <p className="font-bold text-lg" style={{ color: client.balance > 0 ? "var(--accent-text)" : "var(--text)" }}>{money(client.balance)}</p>
+                    </div>
+                    <div className="rounded-xl p-3" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
+                      <p className="text-xs" style={{ color: "var(--text-muted)" }}>Credit Limit</p>
+                      <p className="font-bold text-lg" style={{ color: "var(--text)" }}>{money(limit)}</p>
+                    </div>
+                  </div>
+                  <div className="mb-1.5 flex justify-between text-xs" style={{ color: "var(--text-muted)" }}>
+                    <span>{used}% used</span>
+                    <span>Limit: {money(limit)}</span>
+                  </div>
+                  <div className="h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--border-cream)" }}>
+                    <div className="h-full rounded-full" style={{ width: `${used}%`, backgroundColor: "#B91C1C" }} />
+                  </div>
+                  {client.overdue > 0 && (
+                    <p className="text-xs font-semibold mt-3" style={{ color: "var(--bad-text)" }}>
+                      {money(client.overdue)} is overdue.
+                    </p>
+                  )}
+                </div>
+
+                <div className="rounded-2xl p-5" style={card}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="font-semibold text-sm mb-1" style={{ color: "var(--text)" }}>Automatic Blocking</h3>
+                      <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                        If a customer exceeds the debt limit, system prevents new credits.
+                      </p>
+                    </div>
+                    <button
+                      role="switch"
+                      aria-checked={settings.auto_block}
+                      aria-label="Automatic blocking"
+                      disabled={blockMut.isPending}
+                      onClick={() => blockMut.mutate(!settings.auto_block)}
+                      className="relative w-11 h-6 rounded-full flex-shrink-0 transition-colors disabled:opacity-60"
+                      style={{ backgroundColor: settings.auto_block ? "#B91C1C" : "var(--border-cream)" }}
+                    >
+                      <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform" style={{ transform: settings.auto_block ? "translateX(22px)" : "translateX(2px)" }} />
                     </button>
-                  ))}
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <button className="flex-1 py-3 rounded-full font-bold text-sm" style={{ backgroundColor: "#F9D103", color: "var(--on-yellow)" }}>
-                    Register Payment
+              </div>
+
+              {/* Column 2 - Debt & Payment */}
+              <div className="space-y-5">
+                <div className="rounded-2xl p-5" style={card}>
+                  <h2 className="font-bold text-lg mb-1" style={{ color: "var(--text)" }}>Debt History</h2>
+                  <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>Track all purchases and payments.</p>
+                  {history.length === 0 ? (
+                    <p className="text-sm py-4 text-center" style={{ color: "var(--text-faint)" }}>No movements yet for {client.name}.</p>
+                  ) : (
+                    <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                      {visibleHistory.map((row) => {
+                        const isPayment = row.kind === "pago";
+                        const Icon = isPayment ? Banknote : ShoppingCart;
+                        return (
+                          <div key={row.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
+                            <span className="text-xs font-semibold w-14" style={{ color: "var(--text-muted)" }}>{shortDate(row.created_at)}</span>
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: isPayment ? "var(--ok-bg)" : "var(--warn-bg)" }}>
+                              <Icon className="w-4 h-4" style={{ color: isPayment ? "var(--ok-text)" : "var(--warn-text)" }} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate" style={{ color: "var(--text)" }}>
+                                {row.description || (isPayment ? "Payment" : "Credit sale")}
+                              </p>
+                              {!isPayment && row.due_date && row.status !== "Paid" && (
+                                <p className="text-[11px]" style={{ color: "var(--text-faint)" }}>Due {shortYmd(row.due_date)}</p>
+                              )}
+                            </div>
+                            <span className="text-sm font-bold" style={{ color: isPayment ? "var(--ok-text)" : "var(--text)" }}>
+                              {isPayment ? "− " : ""}{money(row.amount)}
+                            </span>
+                            <StatusBadge status={row.status} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {history.length > 8 && (
+                    <button onClick={() => setShowAll(!showAll)} className="mt-3 text-sm font-semibold" style={{ color: "var(--accent-text)" }}>
+                      {showAll ? "Show less" : `View Full History (${history.length})`}
+                    </button>
+                  )}
+                </div>
+
+                {/* New credit */}
+                <form onSubmit={submitFiado} className="rounded-2xl p-5" style={card}>
+                  <h2 className="font-bold text-lg mb-4" style={{ color: "var(--text)" }}>New Credit (Fiado)</h2>
+                  <label htmlFor="fiado-amount" className="text-xs font-semibold block mb-1.5" style={{ color: "var(--text-muted)" }}>Amount (B/.)</label>
+                  <input id="fiado-amount" value={fiadoAmount} onChange={(e) => setFiadoAmount(e.target.value)} inputMode="decimal" placeholder="0.00"
+                    className="w-full rounded-xl px-4 py-3 text-sm font-semibold border outline-none mb-3" style={fieldStyle} />
+                  <label htmlFor="fiado-desc" className="text-xs font-semibold block mb-1.5" style={{ color: "var(--text-muted)" }}>What did they take? (optional)</label>
+                  <input id="fiado-desc" value={fiadoDesc} onChange={(e) => setFiadoDesc(e.target.value)} placeholder="Rice 5 lb, milk 2"
+                    className="w-full rounded-xl px-4 py-3 text-sm border outline-none mb-3" style={fieldStyle} />
+                  <label htmlFor="fiado-due" className="text-xs font-semibold block mb-1.5" style={{ color: "var(--text-muted)" }}>
+                    Due date (empty = {settings.default_due_days} days, {shortYmd(defaultDue)})
+                  </label>
+                  <input id="fiado-due" type="date" min={today} value={fiadoDue} onChange={(e) => setFiadoDue(e.target.value)}
+                    className="w-full rounded-xl px-4 py-3 text-sm border outline-none mb-4" style={fieldStyle} />
+                  <button type="submit" disabled={fiadoMut.isPending} className="w-full py-3 rounded-full font-bold text-sm text-white disabled:opacity-60" style={{ backgroundColor: "#B91C1C" }}>
+                    {fiadoMut.isPending ? "Saving..." : "Register Credit"}
                   </button>
-                  <button className="flex-1 py-3 rounded-full font-bold text-sm border" style={{ backgroundColor: "var(--white)", color: "var(--text)", borderColor: "var(--border-cream)" }}>
-                    Mark as Paid
-                  </button>
+                  <Note note={fiadoNote} />
+                </form>
+
+                {/* Register payment */}
+                <div className="rounded-2xl p-5" style={card}>
+                  <h2 className="font-bold text-lg mb-4" style={{ color: "var(--text)" }}>Register Payment</h2>
+                  <label htmlFor="pay-amount" className="text-xs font-semibold block mb-1.5" style={{ color: "var(--text-muted)" }}>Payment Amount (B/.)</label>
+                  <input
+                    id="pay-amount"
+                    value={paymentType === "full" ? client.balance.toFixed(2) : paymentAmount}
+                    onChange={(e) => setPaymentAmount(e.target.value)}
+                    readOnly={paymentType === "full"}
+                    inputMode="decimal"
+                    placeholder="0.00"
+                    className="w-full rounded-xl px-4 py-3 text-sm font-semibold border outline-none mb-4"
+                    style={fieldStyle}
+                  />
+                  <p className="text-xs font-semibold block mb-2" style={{ color: "var(--text-muted)" }}>Payment Type</p>
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    {[
+                      { key: "partial", label: "Partial Payment" },
+                      { key: "full", label: "Full Payment" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => setPaymentType(opt.key)}
+                        className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium border transition"
+                        style={{
+                          backgroundColor: paymentType === opt.key ? "var(--warn-bg)" : "var(--white)",
+                          borderColor: paymentType === opt.key ? "#F9D103" : "var(--border-cream)",
+                          color: "var(--text)",
+                        }}
+                      >
+                        <span className="w-4 h-4 rounded-full border-2 flex items-center justify-center" style={{ borderColor: paymentType === opt.key ? "#B91C1C" : "var(--border-cream)" }}>
+                          {paymentType === opt.key && <span className="w-2 h-2 rounded-full" style={{ backgroundColor: "#B91C1C" }} />}
+                        </span>
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={submitPayment} disabled={payMut.isPending || !(client.balance > 0)}
+                      className="flex-1 py-3 rounded-full font-bold text-sm disabled:opacity-50" style={{ backgroundColor: "#F9D103", color: "var(--on-yellow)" }}>
+                      {payMut.isPending ? "Saving..." : "Register Payment"}
+                    </button>
+                    <button onClick={markAsPaid} disabled={payMut.isPending || !(client.balance > 0)}
+                      className="flex-1 py-3 rounded-full font-bold text-sm border disabled:opacity-50"
+                      style={{ backgroundColor: "var(--white)", color: "var(--text)", borderColor: "var(--border-cream)" }}>
+                      Mark as Paid
+                    </button>
+                  </div>
+                  {!(client.balance > 0) && (
+                    <p className="text-xs mt-3" style={{ color: "var(--text-faint)" }}>{client.name} has no debt right now.</p>
+                  )}
+                  <Note note={payNote} />
+                </div>
+              </div>
+
+              {/* Column 3 - Activity & Overview */}
+              <div className="space-y-5">
+                <div className="rounded-2xl p-5" style={card}>
+                  <h2 className="font-bold text-lg mb-4" style={{ color: "var(--text)" }}>Recent Activity</h2>
+                  {entries.length === 0 ? (
+                    <p className="text-sm" style={{ color: "var(--text-faint)" }}>No activity yet.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {entries.slice(0, 6).map((a) => (
+                        <div key={a.id} className="p-3 rounded-xl" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
+                          <p className="text-sm font-medium" style={{ color: "var(--text)" }}>
+                            {names[a.client_id] || "Client"}, {a.kind === "pago" ? "Paid" : "New debt"} {money(a.amount)}
+                          </p>
+                          <p className="text-xs mt-0.5" style={{ color: "var(--text-faint)" }}>{relativeDay(a.created_at, today)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-2xl p-5" style={card}>
+                  <h2 className="font-bold text-lg mb-4" style={{ color: "var(--text)" }}>Debt Overview</h2>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { label: "Outstanding Debt", value: money(overview.outstanding), icon: TrendingUp, color: "var(--accent-text)" },
+                      { label: "Payments Today", value: money(overview.paymentsToday), icon: Banknote, color: "#059669" },
+                      { label: "Customers with Debt", value: overview.customersWithDebt, icon: Users, color: "var(--text)" },
+                      { label: "Overdue", value: overview.overdueCustomers, icon: AlertTriangle, color: "var(--accent-text)" },
+                    ].map((s) => (
+                      <div key={s.label} className="rounded-xl p-3" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
+                        <s.icon className="w-4 h-4 mb-1.5" style={{ color: s.color }} />
+                        <p className="font-bold text-base" style={{ color: "var(--text)" }}>{s.value}</p>
+                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{s.label}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
-
-            {/* Column 3 - Activity & Overview */}
-            <div className="space-y-5">
-              {/* Recent activity */}
-              <div className="rounded-2xl p-5" style={{ backgroundColor: "var(--surface)" }}>
-                <h2 className="font-bold text-lg mb-4" style={{ color: "var(--text)" }}>Recent Activity</h2>
-                <div className="space-y-2">
-                  {ACTIVITY.map((a, i) => (
-                    <div key={i} className="p-3 rounded-xl" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
-                      <p className="text-sm font-medium" style={{ color: "var(--text)" }}>{a.text}</p>
-                      <p className="text-xs mt-0.5" style={{ color: "var(--text-faint)" }}>{a.time}</p>
-                    </div>
-                  ))}
-                </div>
-                <button className="mt-3 text-sm font-semibold flex items-center gap-1" style={{color: "var(--accent-text)" }}>
-                  View all activity <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              {/* Debt overview */}
-              <div className="rounded-2xl p-5" style={{ backgroundColor: "var(--surface)" }}>
-                <h2 className="font-bold text-lg mb-4" style={{ color: "var(--text)" }}>Debt Overview</h2>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { label: "Outstanding Debt", value: "B/. 480.00", icon: TrendingUp,color: "var(--accent-text)" },
-                    { label: "Payments Today", value: "B/. 150.00", icon: Banknote, color: "#059669" },
-                    { label: "Customers with Debt", value: "18", icon: Users, color: "var(--text)" },
-                    { label: "Overdue", value: "4", icon: AlertTriangle,color: "var(--accent-text)" },
-                  ].map((s) => (
-                    <div key={s.label} className="rounded-xl p-3" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
-                      <s.icon className="w-4 h-4 mb-1.5" style={{ color: s.color }} />
-                      <p className="font-bold text-base" style={{ color: "var(--text)" }}>{s.value}</p>
-                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{s.label}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
 
           <p className="text-center text-white/70 text-sm mt-10">© 2026. Manage today for a better tomorrow.</p>
         </div>

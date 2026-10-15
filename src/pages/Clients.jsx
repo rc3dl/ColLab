@@ -66,8 +66,21 @@ function ClientModal({ client, onClose }) {
     save.mutate({ name, phone, credit_limit: limit });
   };
 
+ 
   const handleArchive = () => {
-    if (window.confirm(`Archive ${client.name}? They will disappear from the list, but their history is kept.`)) {
+    setError("");
+
+    if (client.balance > 0) {
+      return setError(
+        `${client.name} still owes ${money(client.balance)}. Register the payment first, then archive.`
+      );
+    }
+
+    if (
+      window.confirm(
+        `Archive ${client.name}? They will disappear from the list, but their history is kept.`
+      )
+    ) {
       archive.mutate();
     }
   };

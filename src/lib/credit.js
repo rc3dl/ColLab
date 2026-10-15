@@ -102,3 +102,117 @@ export function reminderText({ name, balance, store }) {
   const first = (name || "").trim().split(/\s+/)[0] || "";
   return `Hola ${first}, te recordamos que tienes ${money(balance)} pendiente en ${store || "nuestro negocio"}. ¡Gracias y te esperamos!`;
 }
+
+// ---------------------------------------------------------------------------
+// Reglas para registrar fiados y pagos (se usan en la pantalla Credit)
+// ---------------------------------------------------------------------------
+
+// Convierte lo que escribe el usuario en un número con 2 decimales.
+// Acepta "12.5", "12,50" o "B/. 12.50". Devuelve NaN si no es un número válido.
+export function parseAmount(value) {
+  const cleaned = String(value ?? "")
+    .replace(/B\/\.?/gi, "")
+    .replace(/\s/g, "")
+    .replace(",", ".");
+  if (cleaned === "" || !/^\d*\.?\d+$|^\d+\.$/.test(cleaned)) return NaN;
+  return Math.round(Number(cleaned) * 100) / 100;
+}
+
+// Límite que se aplica a un cliente: el suyo, o el del negocio si no tiene.
+export function effectiveLimit(client, settings) {
+  const own = client?.credit_limit;
+  return own === null || own === undefined ? Number(settings?.default_credit_limit ?? 100) : Number(own);
+}
+
+// ¿Se puede registrar este fiado? Devuelve un mensaje de error, o "" si está bien.
+export function checkFiado({ amount, balance, limit, autoBlock }) {
+  if (!(amount > 0)) return "Enter an amount greater than 0.";
+  if (autoBlock && toCents(balance) + toCents(amount) > toCents(limit)) {
+    const room = Math.max(0, toCents(limit) - toCents(balance)) / 100;
+    return `Blocked: this credit would pass the limit of ${money(limit)}. Current debt is ${money(balance)} (room left: ${money(room)}).`;
+  }
+  return "";
+}
+
+// ¿Se puede registrar este pago? Devuelve un mensaje de error, o "" si está bien.
+export function checkPayment({ amount, balance }) {
+  if (!(balance > 0)) return "This customer has no debt.";
+  if (!(amount > 0)) return "Enter an amount greater than 0.";
+  if (toCents(amount) > toCents(balance)) return `The payment is higher than the debt (${money(balance)}).`;
+  return "";
+}
+
+// Suma días a una fecha "YYYY-MM-DD" y devuelve "YYYY-MM-DD".
+export function addDays(ymd, days) {
+  const d = new Date(`${ymd}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + Number(days));
+  return d.toISOString().slice(0, 10);
+}
+
+// "Today", "Yesterday" o "14 JUL".
+export function relativeDay(timestamp, today = todayPanama()) {
+  const day = dateInPanama(timestamp);
+  if (day === today) return "Today";
+  if (day === addDays(today, -1)) return "Yesterday";
+  return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", timeZone: "America/Panama" })
+    .format(new Date(timestamp))
+    .toUpperCase();
+}
+
+// Historial de UN cliente, del más nuevo al más viejo, con el estado de cada fiado:
+//   Paid (ya cubierto) | Pending (debe, aún a tiempo) | Overdue (debe y ya venció)
+// Los pagos se muestran como "Paid". Usa la misma regla: los pagos cubren primero lo más viejo.
+export function annotateEntries(entries, today = todayPanama()) {
+  const ordered = [...entries].sort((a, b) => {
+    const diff = Date.parse(a.created_at) - Date.parse(b.created_at);
+    return diff !== 0 ? diff : String(a.id).localeCompare(String(b.id));
+  });
+  let coverage = ordered.filter((e) => e.kind === "pago").reduce((s, e) => s + toCents(e.amount), 0);
+  const status = new Map();
+  for (const e of ordered) {
+    if (e.kind !== "fiado") continue;
+    const amount = toCents(e.amount);
+    const covered = Math.min(coverage, amount);
+    coverage -= covered;
+    const remaining = amount - covered;
+    status.set(e.id, remaining === 0 ? "Paid" : e.due_date && e.due_date < today ? "Overdue" : "Pending");
+  }
+  return ordered.reverse().map((e) => ({ ...e, status: e.kind === "pago" ? "Paid" : status.get(e.id) }));
+}
+
+// Resumen de todo el negocio (lo usan Credit, Dashboard y Reports).
+//   clients = lista con balance/status ya calculados | entries = todos los movimientos
+export function summarize(clients, entries, today = todayPanama()) {
+  return {
+    outstanding: clients.reduce((s, c) => s + toCents(c.balance), 0) / 100,
+    customersWithDebt: clients.filter((c) => c.balance > 0).length,
+    overdueCustomers: clients.filter((c) => c.status === "Overdue").length,
+    paymentsToday:
+      entries
+        .filter((e) => e.kind === "pago" && dateInPanama(e.created_at) === today)
+        .reduce((s, e) => s + toCents(e.amount), 0) / 100,
+  };
+}
+
+// "14 JUL" a partir de una fecha-hora de la base de datos (hora de Panamá).
+export function shortDate(timestamp) {
+  return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", timeZone: "America/Panama" })
+    .format(new Date(timestamp))
+    .toUpperCase();
+}
+
+// "24 OCT" a partir de una fecha sin hora ("2026-10-24"), como la fecha límite de un fiado.
+export function shortYmd(ymd) {
+  return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", timeZone: "UTC" })
+    .format(new Date(`${ymd}T00:00:00Z`))
+    .toUpperCase();
+}
+
+// Qué porcentaje del límite se ha usado (0 a 100). Se calcula con centavos para no fallar con decimales.
+export function percentUsed(balance, limit) {
+  const b = toCents(balance);
+  const l = toCents(limit);
+  if (b <= 0) return 0;
+  if (l <= 0) return 100;
+  return Math.min(100, Math.round((b * 100) / l));
+}
