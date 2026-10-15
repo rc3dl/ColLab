@@ -146,14 +146,14 @@ export default function Register() {
         </>
       }
     >
-      <Button
+    {/*  <Button
         variant="outline"
         className="w-full h-12 text-sm font-medium mb-6"
         onClick={handleGoogle}
       >
         <GoogleIcon className="w-5 h-5 mr-2" />
         Continue with Google
-      </Button>
+      </Button>*/}
 
       <div className="relative mb-6">
         <div className="absolute inset-0 flex items-center">
