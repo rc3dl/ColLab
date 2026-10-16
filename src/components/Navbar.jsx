@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, Moon, Sun, UserCircle } from "lucide-react";
 import { useTheme } from "@/lib/ThemeContext";
+import { useAuth } from "@/lib/AuthContext";
 import NotificationBell from "@/components/NotificationBell";
 
 const NAV_ITEMS = [
@@ -15,8 +16,16 @@ const NAV_ITEMS = [
 
 function Logo() {
   return (
-    <Link to="/" className="flex items-center select-none" aria-label="FIA'O, inicio">
-     <img src="/Logo-fiao-120x40.svg" alt="FIA'O" className="h-8 sm:h-10 w-auto" />
+    <Link
+      to="/"
+      className="flex items-center select-none"
+      aria-label="FIA'O, inicio"
+    >
+      <img
+        src="/Logo-fiao-120x40.svg"
+        alt="FIA'O"
+        className="h-8 sm:h-10 w-auto"
+      />
     </Link>
   );
 }
@@ -26,30 +35,43 @@ export default function Navbar() {
   const location = useLocation();
   const { isAuthenticated } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+
   const homePath = isAuthenticated ? "/dashboard" : "/";
 
   return (
-    <header className="w-full" style={{ backgroundColor: "var(--navbar-bg)" }}>
-      {/* Floating nav */}
+    <header
+      className="w-full"
+      style={{ backgroundColor: "var(--navbar-bg)" }}
+    >
+      {/* Floating navigation */}
       <div className="px-3 sm:px-6 pb-4">
-        <nav className="mx-auto max-w-6xl rounded-full px-4 sm:px-6 py-3 flex items-center justify-between shadow-lg"
-          style={{ backgroundColor: "var(--navbar-bg)", boxShadow: "0 8px 24px rgba(0,0,0,0.18)" }}>
+        <nav
+          className="mx-auto max-w-6xl rounded-full px-4 sm:px-6 py-3 flex items-center justify-between shadow-lg"
+          style={{
+            backgroundColor: "var(--navbar-bg)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
+          }}
+        >
           <Logo />
 
           {isAuthenticated ? (
             <>
-              {/* Desktop nav */}
+              {/* Desktop navigation */}
               <div className="hidden lg:flex items-center gap-1.5">
                 {NAV_ITEMS.map((item) => {
-                  const target = item.label === "Home" ? homePath : item.path;
+                  const target =
+                    item.label === "Home" ? homePath : item.path;
                   const active = location.pathname === target;
+
                   return (
                     <Link
                       key={item.path}
                       to={target}
                       className="px-4 py-2 rounded-full text-sm font-semibold transition-all"
                       style={{
-                        backgroundColor: active ? "#F9D103" : "rgba(249,209,3,0.12)",
+                        backgroundColor: active
+                          ? "#F9D103"
+                          : "rgba(249,209,3,0.12)",
                         color: active ? "#2D2926" : "#FFFFFF",
                       }}
                     >
@@ -59,14 +81,23 @@ export default function Navbar() {
                 })}
               </div>
 
-            <NotificationBell />
+              {/* Desktop actions */}
+              <div className="hidden lg:flex items-center gap-2">
+                <NotificationBell />
 
+                <button
+                  type="button"
                   onClick={toggleTheme}
                   className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 transition"
                   aria-label="Toggle dark mode"
                 >
-                  {isDark ? <Sun className="w-4 h-4 text-white" /> : <Moon className="w-4 h-4 text-white" />}
+                  {isDark ? (
+                    <Sun className="w-4 h-4 text-white" />
+                  ) : (
+                    <Moon className="w-4 h-4 text-white" />
+                  )}
                 </button>
+
                 <Link
                   to="/profile"
                   className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 transition"
@@ -76,24 +107,33 @@ export default function Navbar() {
                 </Link>
               </div>
 
-               {/* Mobile: avisos + menú */}
-  <div className="lg:hidden flex items-center gap-1">
-    <NotificationBell />
-    <button
-      className="w-9 h-9 rounded-full flex items-center justify-center text-white"
-      onClick={() => setOpen(!open)}
-      aria-label="Toggle menu"
-    >
-      {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-    </button>
-  </div>
+              {/* Mobile notifications and menu */}
+              <div className="lg:hidden flex items-center gap-1">
+                <NotificationBell />
+
+                <button
+                  type="button"
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-white"
+                  onClick={() => setOpen(!open)}
+                  aria-label="Toggle menu"
+                  aria-expanded={open}
+                >
+                  {open ? (
+                    <X className="w-5 h-5" />
+                  ) : (
+                    <Menu className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
             </>
-          ) :
-           (
-            <Link     
+          ) : (
+            <Link
               to="/login"
               className="px-5 py-2 rounded-full text-sm font-semibold transition-all"
-              style={{ backgroundColor: "#F9D103", color: "#2D2926" }}
+              style={{
+                backgroundColor: "#F9D103",
+                color: "#2D2926",
+              }}
             >
               Log in
             </Link>
@@ -102,10 +142,15 @@ export default function Navbar() {
 
         {/* Mobile menu */}
         {open && isAuthenticated && (
-          <div className="lg:hidden mx-auto max-w-6xl mt-2 rounded-2xl p-3 flex flex-col gap-1.5" style={{ backgroundColor: "var(--navbar-bg)" }}>
+          <div
+            className="lg:hidden mx-auto max-w-6xl mt-2 rounded-2xl p-3 flex flex-col gap-1.5"
+            style={{ backgroundColor: "var(--navbar-bg)" }}
+          >
             {NAV_ITEMS.map((item) => {
-              const target = item.label === "Home" ? homePath : item.path;
+              const target =
+                item.label === "Home" ? homePath : item.path;
               const active = location.pathname === target;
+
               return (
                 <Link
                   key={item.path}
@@ -113,29 +158,56 @@ export default function Navbar() {
                   onClick={() => setOpen(false)}
                   className="px-4 py-2.5 rounded-full text-sm font-semibold text-center"
                   style={{
-                    backgroundColor: active ? "#F9D103" : "rgba(255,255,255,0.08)",
+                    backgroundColor: active
+                      ? "#F9D103"
+                      : "rgba(255,255,255,0.08)",
                     color: active ? "#2D2926" : "#FFFFFF",
                   }}
                 >
                   {item.label}
                 </Link>
               );
-            })}<Link
-  to="/profile"
-  onClick={() => setOpen(false)}
-  className="px-4 py-2.5 rounded-full text-sm font-semibold text-center flex items-center justify-center gap-2"
-  style={{
-    backgroundColor: location.pathname === "/profile"
-      ? "#F9D103"
-      : "rgba(255,255,255,0.08)",
-    color: location.pathname === "/profile"
-      ? "#2D2926"
-      : "#FFFFFF",
-  }}
->
-  <UserCircle className="w-4 h-4" />
-  Profile
-</Link>
+            })}
+
+            {/* Profile link */}
+            <Link
+              to="/profile"
+              onClick={() => setOpen(false)}
+              className="px-4 py-2.5 rounded-full text-sm font-semibold text-center flex items-center justify-center gap-2"
+              style={{
+                backgroundColor:
+                  location.pathname === "/profile"
+                    ? "#F9D103"
+                    : "rgba(255,255,255,0.08)",
+                color:
+                  location.pathname === "/profile"
+                    ? "#2D2926"
+                    : "#FFFFFF",
+              }}
+            >
+              <UserCircle className="w-4 h-4" />
+              Profile
+            </Link>
+
+            {/* Theme toggle on mobile */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="px-4 py-2.5 rounded-full text-sm font-semibold flex items-center justify-center gap-2 text-white hover:bg-white/10 transition"
+              aria-label="Toggle dark mode"
+            >
+              {isDark ? (
+                <>
+                  <Sun className="w-4 h-4" />
+                  Light mode
+                </>
+              ) : (
+                <>
+                  <Moon className="w-4 h-4" />
+                  Dark mode
+                </>
+              )}
+            </button>
           </div>
         )}
       </div>
