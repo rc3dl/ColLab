@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Bell, Globe, Moon, Sun, UserCircle } from "lucide-react";
-import { useAuth } from "@/lib/AuthContext";
+import { Menu, X, Moon, Sun, UserCircle } from "lucide-react";
 import { useTheme } from "@/lib/ThemeContext";
+import NotificationBell from "@/components/NotificationBell";
 
 const NAV_ITEMS = [
   { label: "Home", path: "/", authPath: "/dashboard" },
@@ -59,14 +59,8 @@ export default function Navbar() {
                 })}
               </div>
 
-              {/* Utility icons (desktop) */}
-              <div className="hidden lg:flex items-center gap-3">
-                <button className="relative w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 transition" aria-label="Notifications">
-                  <Bell className="w-4 h-4 text-white" />
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center" style={{ backgroundColor: "#F9D103", color: "#2D2926" }}>3</span>
-                </button>
-                <button className="px-2 py-1 rounded-full text-xs font-semibold text-white hover:bg-white/10 transition" aria-label="Language">ES</button>
-                <button
+            <NotificationBell />
+
                   onClick={toggleTheme}
                   className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 transition"
                   aria-label="Toggle dark mode"
@@ -82,17 +76,21 @@ export default function Navbar() {
                 </Link>
               </div>
 
-              {/* Mobile toggle */}
-              <button
-                className="lg:hidden w-9 h-9 rounded-full flex items-center justify-center text-white"
-                onClick={() => setOpen(!open)}
-                aria-label="Toggle menu"
-              >
-                {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </button>
+               {/* Mobile: avisos + menú */}
+  <div className="lg:hidden flex items-center gap-1">
+    <NotificationBell />
+    <button
+      className="w-9 h-9 rounded-full flex items-center justify-center text-white"
+      onClick={() => setOpen(!open)}
+      aria-label="Toggle menu"
+    >
+      {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+    </button>
+  </div>
             </>
-          ) : (
-            <Link
+          ) :
+           (
+            <Link     
               to="/login"
               className="px-5 py-2 rounded-full text-sm font-semibold transition-all"
               style={{ backgroundColor: "#F9D103", color: "#2D2926" }}

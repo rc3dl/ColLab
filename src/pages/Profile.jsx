@@ -8,7 +8,7 @@ import { base44 } from "@/api/authClient";
 import { fetchSettings, saveSettings, LEDGER_KEYS } from "@/lib/creditApi";
 import { userToForm, validateProfile, settingsToForm, validateSettings, isDirty } from "@/lib/settings";
 import { money, parseAmount } from "@/lib/credit";
-import { User, Store, Mail, Phone, MapPin, LogOut, Save, Shield, Globe, Wallet, Clock } from "lucide-react";
+import { User, Store, Mail, Phone, MapPin, LogOut, Save, Shield, Globe, Wallet, Clock, Bell } from "lucide-react";
 
 const card = { backgroundColor: "var(--surface)" };
 
@@ -63,6 +63,16 @@ export default function Profile() {
       setRulesNote({ type: "ok", text: "Credit rules saved." });
     },
     onError: (e) => setRulesNote({ type: "error", text: e.message }),
+  });
+    // Interruptor de la campana: se guarda al instante.
+  const notificationsOn = settingsQuery.data?.notifications_enabled ?? true;
+  const toggleNotifications = useMutation({
+    mutationFn: (value) => saveSettings({ notifications_enabled: value }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["settings"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
+      ]),
   });
 
   const handleInfoChange = (e) => {
@@ -208,6 +218,30 @@ export default function Profile() {
             <div>
               <SettingRow icon={Mail} title="Email" value={user?.email} />
               <SettingRow icon={Globe} title="Language" value="English" />
+                            <div className="flex items-center justify-between gap-3 py-3" style={{ borderTop: "1px solid var(--border-cream)" }}>
+                <div className="flex items-center gap-3">
+                  <Bell className="w-4 h-4" style={{ color: "var(--accent-text)" }} />
+                  <div>
+                    <span className="text-sm font-medium block" style={{ color: "var(--text)" }}>Notifications</span>
+                    <span className="text-[11px] block" style={{ color: "var(--text-faint)" }}>Bell alerts for overdue accounts and low stock.</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={notificationsOn}
+                  aria-label="Notifications"
+                  disabled={toggleNotifications.isPending || !settingsQuery.data}
+                  onClick={() => toggleNotifications.mutate(!notificationsOn)}
+                  className="relative w-11 h-6 rounded-full flex-shrink-0 transition-colors disabled:opacity-60"
+                  style={{ backgroundColor: notificationsOn ? "#B91C1C" : "var(--border-cream)" }}
+                >
+                  <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform" style={{ transform: notificationsOn ? "translateX(22px)" : "translateX(2px)" }} />
+                </button>
+              </div>
+              {toggleNotifications.isError && (
+                <p role="alert" className="text-sm mt-2" style={{ color: "var(--bad-text)" }}>Could not save: {toggleNotifications.error.message}</p>
+              )}
             </div>
           </div>
 

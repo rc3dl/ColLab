@@ -9,7 +9,7 @@ function check(error) {
 // Cuando se registra un fiado o un pago hay que refrescar todas estas pantallas.
 export const LEDGER_KEYS = [["credit"], ["clients"], ["dashboard"], ["reports"]];
 
-const DEFAULT_SETTINGS = { default_credit_limit: 100, default_due_days: 15, auto_block: true };
+   const DEFAULT_SETTINGS = { default_credit_limit: 100, default_due_days: 15, auto_block: true, notifications_enabled: true };
 
 // Ajustes del negocio (límite por defecto, plazo y bloqueo automático).
 export async function fetchSettings() {
@@ -17,14 +17,15 @@ export async function fetchSettings() {
   if (!auth?.user) return DEFAULT_SETTINGS;
   const { data, error } = await supabase
     .from("profiles")
-    .select("default_credit_limit, default_due_days, auto_block")
+      .select("default_credit_limit, default_due_days, auto_block, notifications_enabled")
     .eq("id", auth.user.id)
     .maybeSingle();
   check(error);
   return {
     default_credit_limit: Number(data?.default_credit_limit ?? DEFAULT_SETTINGS.default_credit_limit),
     default_due_days: Number(data?.default_due_days ?? DEFAULT_SETTINGS.default_due_days),
-    auto_block: data?.auto_block ?? DEFAULT_SETTINGS.auto_block,
+       auto_block: data?.auto_block ?? DEFAULT_SETTINGS.auto_block,
+   notifications_enabled: data?.notifications_enabled ?? DEFAULT_SETTINGS.notifications_enabled,
   };
 }
 
