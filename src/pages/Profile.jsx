@@ -181,20 +181,34 @@ export default function Profile() {
                       Stop new credit when it would take a customer over their limit.
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={rulesForm.auto_block}
-                    aria-label="Automatic blocking"
-                    onClick={() => {
-                      setRulesDraft({ ...rulesForm, auto_block: !rulesForm.auto_block });
-                      setRulesNote(null);
-                    }}
-                    className="relative w-11 h-6 rounded-full flex-shrink-0 transition-colors"
-                    style={{ backgroundColor: rulesForm.auto_block ? "#B91C1C" : "var(--border-cream)" }}
-                  >
-                    <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform" style={{ transform: rulesForm.auto_block ? "translateX(22px)" : "translateX(2px)" }} />
-                  </button>
+                 <button
+  type="button"
+  role="switch"
+  aria-checked={rulesForm.auto_block}
+  aria-label="Automatic blocking"
+  onClick={() => {
+    setRulesDraft({
+      ...rulesForm,
+      auto_block: !rulesForm.auto_block,
+    });
+    setRulesNote(null);
+  }}
+  className="relative w-11 h-6 rounded-full flex-shrink-0 transition-colors"
+  style={{
+    backgroundColor: rulesForm.auto_block
+      ? "#B91C1C"
+      : "var(--border-cream)",
+  }}
+>
+  <span
+    className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform"
+    style={{
+      transform: rulesForm.auto_block
+        ? "translateX(20px)"
+        : "translateX(0px)",
+    }}
+  />
+</button>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 mt-5">
@@ -226,18 +240,29 @@ export default function Profile() {
                     <span className="text-[11px] block" style={{ color: "var(--text-faint)" }}>Bell alerts for overdue accounts and low stock.</span>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={notificationsOn}
-                  aria-label="Notifications"
-                  disabled={toggleNotifications.isPending || !settingsQuery.data}
-                  onClick={() => toggleNotifications.mutate(!notificationsOn)}
-                  className="relative w-11 h-6 rounded-full flex-shrink-0 transition-colors disabled:opacity-60"
-                  style={{ backgroundColor: notificationsOn ? "#B91C1C" : "var(--border-cream)" }}
-                >
-                  <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform" style={{ transform: notificationsOn ? "translateX(22px)" : "translateX(2px)" }} />
-                </button>
+              <button
+  type="button"
+  role="switch"
+  aria-checked={notificationsOn}
+  aria-label="Notifications"
+  disabled={toggleNotifications.isPending || !settingsQuery.data}
+  onClick={() => toggleNotifications.mutate(!notificationsOn)}
+  className="relative w-11 h-6 rounded-full flex-shrink-0 transition-colors disabled:opacity-60"
+  style={{
+    backgroundColor: notificationsOn
+      ? "#B91C1C"
+      : "var(--border-cream)",
+  }}
+>
+  <span
+    className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform"
+    style={{
+      transform: notificationsOn
+        ? "translateX(20px)"
+        : "translateX(0px)",
+    }}
+  />
+</button>
               </div>
               {toggleNotifications.isError && (
                 <p role="alert" className="text-sm mt-2" style={{ color: "var(--bad-text)" }}>Could not save: {toggleNotifications.error.message}</p>
