@@ -85,3 +85,11 @@ export async function saveAutoBlock(value) {
   const { error } = await supabase.from("profiles").upsert({ id: auth.user.id, auto_block: value });
   check(error);
 }
+
+// Guardar las reglas de crédito del negocio (Profile): límite por defecto, días para pagar y bloqueo.
+export async function saveSettings(values) {
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth?.user) throw new Error("Not authenticated");
+  const { error } = await supabase.from("profiles").upsert({ id: auth.user.id, ...values });
+  check(error);
+}

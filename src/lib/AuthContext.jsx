@@ -66,10 +66,19 @@ export const AuthProvider = ({ children }) => {
     base44.auth.redirectToLogin();
   };
 
+    // Vuelve a leer los datos del usuario sin mostrar la pantalla de carga (se usa al guardar el perfil).
+  const refreshUser = async () => {
+    try {
+      setUser(await base44.auth.me());
+    } catch (error) {
+      console.error('Could not refresh user:', error);
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       user, isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError,
-      appPublicSettings, authChecked, logout, navigateToLogin, checkUserAuth, checkAppState
+      appPublicSettings, authChecked, logout, navigateToLogin, checkUserAuth, checkAppState, refreshUser
     }}>
       {children}
     </AuthContext.Provider>

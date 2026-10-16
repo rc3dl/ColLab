@@ -1,56 +1,95 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/lib/AuthContext";
 import { base44 } from "@/api/authClient";
-import { User, Store, Mail, Phone, MapPin, LogOut, Save, Shield, Bell, Globe } from "lucide-react";
+import { fetchSettings, saveSettings, LEDGER_KEYS } from "@/lib/creditApi";
+import { userToForm, validateProfile, settingsToForm, validateSettings, isDirty } from "@/lib/settings";
+import { money, parseAmount } from "@/lib/credit";
+import { User, Store, Mail, Phone, MapPin, LogOut, Save, Shield, Globe, Wallet, Clock } from "lucide-react";
+
+const card = { backgroundColor: "var(--surface)" };
+
+function Note({ note }) {
+  if (!note) return null;
+  const ok = note.type === "ok";
+  return (
+    <p
+      role={ok ? "status" : "alert"}
+      className="text-sm rounded-xl px-3 py-2 mt-4"
+      style={{ backgroundColor: ok ? "var(--ok-bg)" : "var(--bad-bg)", color: ok ? "var(--ok-text)" : "var(--bad-text)" }}
+    >
+      {note.text}
+    </p>
+  );
+}
 
 export default function Profile() {
-  const { user, logout } = useAuth();
-  const [form, setForm] = useState({
-    full_name: "",
-    store_name: "",
-    phone: "",
-    address: "",
-    ruc: "",
+  const { user, logout, refreshUser } = useAuth();
+  const queryClient = useQueryClient();
+  const settingsQuery = useQuery({ queryKey: ["settings"], queryFn: fetchSettings });
+
+  // "draft" = lo que el usuario está escribiendo (null = todavía no ha tocado nada).
+  const [infoDraft, setInfoDraft] = useState(null);
+  const [infoNote, setInfoNote] = useState(null);
+  const [rulesDraft, setRulesDraft] = useState(null);
+  const [rulesNote, setRulesNote] = useState(null);
+
+  const infoSaved = userToForm(user);
+  const infoForm = infoDraft ?? infoSaved;
+  const rulesSaved = settingsQuery.data ? settingsToForm(settingsQuery.data) : null;
+  const rulesForm = rulesDraft ?? rulesSaved;
+  const infoDirty = isDirty(infoDraft, infoSaved);
+  const rulesDirty = isDirty(rulesDraft, rulesSaved);
+
+  const saveInfo = useMutation({
+    mutationFn: (values) => base44.auth.updateMe(values),
+    onSuccess: async () => {
+      await refreshUser(); // para que el nombre de la tienda se actualice en toda la web
+      setInfoDraft(null);
+      setInfoNote({ type: "ok", text: "Business information saved." });
+    },
+    onError: (e) => setInfoNote({ type: "error", text: e.message }),
   });
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      setForm({
-        full_name: user.full_name || "",
-        store_name: user.store_name || "",
-        phone: user.phone || "",
-        address: user.address || "",
-        ruc: user.ruc || "",
-      });
-    }
-  }, [user]);
+  const saveRules = useMutation({
+    mutationFn: saveSettings,
+    onSuccess: async () => {
+      LEDGER_KEYS.forEach((key) => queryClient.invalidateQueries({ queryKey: key }));
+      await queryClient.invalidateQueries({ queryKey: ["settings"] });
+      setRulesDraft(null);
+      setRulesNote({ type: "ok", text: "Credit rules saved." });
+    },
+    onError: (e) => setRulesNote({ type: "error", text: e.message }),
+  });
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    setSaved(false);
+  const handleInfoChange = (e) => {
+    setInfoDraft({ ...infoForm, [e.target.name]: e.target.value });
+    setInfoNote(null);
+  };
+  const handleRulesChange = (e) => {
+    setRulesDraft({ ...rulesForm, [e.target.name]: e.target.value });
+    setRulesNote(null);
   };
 
-  const handleSave = async (e) => {
+  const submitInfo = (e) => {
     e.preventDefault();
-    setSaving(true);
-    try {
-      await base44.auth.updateMe(form);
-      setSaved(true);
-    } catch (err) {
-      console.error("Failed to update profile", err);
-    } finally {
-      setSaving(false);
-    }
+    setInfoNote(null);
+    const result = validateProfile(infoForm);
+    if (result.error) return setInfoNote({ type: "error", text: result.error });
+    saveInfo.mutate(result.values);
+  };
+  const submitRules = (e) => {
+    e.preventDefault();
+    setRulesNote(null);
+    const result = validateSettings(rulesForm);
+    if (result.error) return setRulesNote({ type: "error", text: result.error });
+    saveRules.mutate(result.values);
   };
 
-  const handleLogout = () => {
-    logout(true);
-  };
+  const limitPreview = rulesForm ? parseAmount(rulesForm.default_credit_limit) : NaN;
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "var(--page-bg)" }}>
@@ -61,71 +100,124 @@ export default function Profile() {
           {/* Header */}
           <div className="flex items-center gap-4 mb-8">
             <div className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#F9D103" }}>
-              <span className="font-bold text-2xl" style={{ color: "var(--text)" }}>
-                {(form.full_name || user?.email || "M").charAt(0).toUpperCase()}
+              <span className="font-bold text-2xl" style={{ color: "var(--on-yellow)" }}>
+                {(infoForm.full_name || user?.email || "M").charAt(0).toUpperCase()}
               </span>
             </div>
             <div>
               <h1 className="text-white font-bold text-2xl sm:text-3xl" style={{ fontFamily: "Poppins" }}>
-                {form.full_name || "Merchant profile"}
+                {infoForm.full_name || "Merchant profile"}
               </h1>
               <p className="text-white/80 text-sm">{user?.email}</p>
             </div>
           </div>
 
-          {/* Profile info card */}
-          <form onSubmit={handleSave} className="rounded-2xl p-6 mb-6" style={{ backgroundColor: "var(--surface)" }}>
+          {/* Business information */}
+          <form onSubmit={submitInfo} className="rounded-2xl p-6 mb-6" style={card}>
             <h2 className="font-bold text-lg mb-5 flex items-center gap-2" style={{ color: "var(--text)" }}>
-              <Store className="w-5 h-5" style={{color: "var(--accent-text)" }} /> Business information
+              <Store className="w-5 h-5" style={{ color: "var(--accent-text)" }} /> Business information
             </h2>
-
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field icon={User} label="Full name" name="full_name" value={form.full_name} onChange={handleChange} />
-              <Field icon={Store} label="Store name" name="store_name" value={form.store_name} onChange={handleChange} />
-              <Field icon={Phone} label="Phone" name="phone" value={form.phone} onChange={handleChange} />
-              <Field icon={Mail} label="RUC / ID" name="ruc" value={form.ruc} onChange={handleChange} />
+              <Field icon={User} label="Full name" name="full_name" value={infoForm.full_name} onChange={handleInfoChange} />
+              <Field icon={Store} label="Store name" name="store_name" value={infoForm.store_name} onChange={handleInfoChange} hint="Appears in the reminders you send to your customers." />
+              <Field icon={Phone} label="Phone" name="phone" value={infoForm.phone} onChange={handleInfoChange} inputMode="tel" />
+              <Field icon={Mail} label="RUC / ID" name="ruc" value={infoForm.ruc} onChange={handleInfoChange} />
               <div className="sm:col-span-2">
-                <Field icon={MapPin} label="Address" name="address" value={form.address} onChange={handleChange} />
+                <Field icon={MapPin} label="Address" name="address" value={infoForm.address} onChange={handleInfoChange} />
               </div>
             </div>
-
-            <div className="flex items-center gap-3 mt-5">
-              <button
-                type="submit"
-                disabled={saving}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold disabled:opacity-60"
-                style={{ backgroundColor: "#B91C1C", color: "#FFFFFF" }}
-              >
-                <Save className="w-4 h-4" /> {saving ? "Saving..." : "Save changes"}
+            <div className="flex flex-wrap items-center gap-3 mt-5">
+              <button type="submit" disabled={saveInfo.isPending || !infoDirty}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold disabled:opacity-50"
+                style={{ backgroundColor: "#B91C1C", color: "#FFFFFF" }}>
+                <Save className="w-4 h-4" /> {saveInfo.isPending ? "Saving..." : "Save changes"}
               </button>
-              {saved && <span className="text-sm font-medium" style={{ color: "#059669" }}>Saved ✓</span>}
+              {infoDirty && <span className="text-xs" style={{ color: "var(--text-muted)" }}>You have unsaved changes.</span>}
             </div>
+            <Note note={infoNote} />
           </form>
 
-          {/* Account settings */}
-          <div className="rounded-2xl p-6 mb-6" style={{ backgroundColor: "var(--surface)" }}>
-            <h2 className="font-bold text-lg mb-5 flex items-center gap-2" style={{ color: "var(--text)" }}>
-              <Shield className="w-5 h-5" style={{color: "var(--accent-text)" }} /> Account settings
+          {/* Credit rules */}
+          <form onSubmit={submitRules} className="rounded-2xl p-6 mb-6" style={card}>
+            <h2 className="font-bold text-lg mb-1 flex items-center gap-2" style={{ color: "var(--text)" }}>
+              <Wallet className="w-5 h-5" style={{ color: "var(--accent-text)" }} /> Credit rules
             </h2>
-            <div className="divide-y" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
+            <p className="text-sm mb-5" style={{ color: "var(--text-muted)" }}>
+              These rules apply to all your customers when you register credit.
+            </p>
+
+            {settingsQuery.isLoading ? (
+              <p className="text-sm py-4" style={{ color: "var(--text-muted)" }}>Loading your rules...</p>
+            ) : settingsQuery.isError ? (
+              <div className="py-2">
+                <p className="text-sm mb-3" style={{ color: "var(--bad-text)" }}>Could not load your rules: {settingsQuery.error.message}</p>
+                <button type="button" onClick={() => settingsQuery.refetch()} className="px-5 py-2 rounded-full text-sm font-bold text-white" style={{ backgroundColor: "#B91C1C" }}>
+                  Try again
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Field icon={Wallet} label="Default credit limit (B/.)" name="default_credit_limit" value={rulesForm.default_credit_limit} onChange={handleRulesChange} inputMode="decimal"
+                    hint={Number.isNaN(limitPreview) ? "Enter a number." : `Customers without their own limit can owe up to ${money(limitPreview)}.`} />
+                  <Field icon={Clock} label="Days to pay" name="default_due_days" value={rulesForm.default_due_days} onChange={handleRulesChange} inputMode="numeric"
+                    hint="Used when you register a credit without choosing a due date." />
+                </div>
+
+                <div className="flex items-start justify-between gap-3 mt-5 p-4 rounded-xl" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
+                  <div>
+                    <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>Automatic blocking</p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                      Stop new credit when it would take a customer over their limit.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={rulesForm.auto_block}
+                    aria-label="Automatic blocking"
+                    onClick={() => {
+                      setRulesDraft({ ...rulesForm, auto_block: !rulesForm.auto_block });
+                      setRulesNote(null);
+                    }}
+                    className="relative w-11 h-6 rounded-full flex-shrink-0 transition-colors"
+                    style={{ backgroundColor: rulesForm.auto_block ? "#B91C1C" : "var(--border-cream)" }}
+                  >
+                    <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform" style={{ transform: rulesForm.auto_block ? "translateX(22px)" : "translateX(2px)" }} />
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 mt-5">
+                  <button type="submit" disabled={saveRules.isPending || !rulesDirty}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold disabled:opacity-50"
+                    style={{ backgroundColor: "#B91C1C", color: "#FFFFFF" }}>
+                    <Save className="w-4 h-4" /> {saveRules.isPending ? "Saving..." : "Save rules"}
+                  </button>
+                  {rulesDirty && <span className="text-xs" style={{ color: "var(--text-muted)" }}>You have unsaved changes.</span>}
+                </div>
+                <Note note={rulesNote} />
+              </>
+            )}
+          </form>
+
+          {/* Account */}
+          <div className="rounded-2xl p-6 mb-6" style={card}>
+            <h2 className="font-bold text-lg mb-5 flex items-center gap-2" style={{ color: "var(--text)" }}>
+              <Shield className="w-5 h-5" style={{ color: "var(--accent-text)" }} /> Account
+            </h2>
+            <div>
               <SettingRow icon={Mail} title="Email" value={user?.email} />
-              <SettingRow icon={Shield} title="Role" value={user?.role || "user"} />
-              <SettingRow icon={Bell} title="Notifications" value="Enabled" />
-              <SettingRow icon={Globe} title="Language" value="Spanish (ES)" />
+              <SettingRow icon={Globe} title="Language" value="English" />
             </div>
           </div>
 
-          {/* Danger zone */}
-          <div className="rounded-2xl p-6 flex items-center justify-between" style={{ backgroundColor: "var(--surface)" }}>
+          {/* Log out */}
+          <div className="rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4" style={card}>
             <div>
               <h2 className="font-bold text-lg" style={{ color: "var(--text)" }}>Close session</h2>
               <p className="text-sm" style={{ color: "var(--text-muted)" }}>Sign out of your account on this device.</p>
             </div>
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold"
-              style={{ backgroundColor: "#B91C1C", color: "#FFFFFF" }}
-            >
+            <button onClick={() => logout(true)} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold" style={{ backgroundColor: "#B91C1C", color: "#FFFFFF" }}>
               <LogOut className="w-4 h-4" /> Log out
             </button>
           </div>
@@ -143,29 +235,24 @@ export default function Profile() {
   );
 }
 
-function Field({ icon: Icon, label, name, value, onChange }) {
+function Field({ icon: Icon, label, name, value, onChange, hint, inputMode }) {
   return (
     <label className="block">
       <span className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-muted)" }}>{label}</span>
-      <div className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ backgroundColor: "var(--white)", border: "1px solid rgba(0,0,0,0.1)" }}>
-        <Icon className="w-4 h-4 flex-shrink-0" style={{color: "var(--accent-text)" }} />
-        <input
-          name={name}
-          value={value}
-          onChange={onChange}
-          className="flex-1 bg-transparent outline-none text-sm"
-          style={{ color: "var(--text)" }}
-        />
+      <div className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
+        <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "var(--accent-text)" }} />
+        <input name={name} value={value} onChange={onChange} inputMode={inputMode} className="flex-1 bg-transparent outline-none text-sm" style={{ color: "var(--text)" }} />
       </div>
+      {hint && <span className="text-[11px] mt-1 block" style={{ color: "var(--text-faint)" }}>{hint}</span>}
     </label>
   );
 }
 
 function SettingRow({ icon: Icon, title, value }) {
   return (
-    <div className="flex items-center justify-between py-3">
+    <div className="flex items-center justify-between py-3" style={{ borderTop: "1px solid var(--border-cream)" }}>
       <div className="flex items-center gap-3">
-        <Icon className="w-4 h-4" style={{color: "var(--accent-text)" }} />
+        <Icon className="w-4 h-4" style={{ color: "var(--accent-text)" }} />
         <span className="text-sm font-medium" style={{ color: "var(--text)" }}>{title}</span>
       </div>
       <span className="text-sm" style={{ color: "var(--text-muted)" }}>{value}</span>
