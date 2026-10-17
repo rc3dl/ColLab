@@ -1,28 +1,33 @@
 import React, { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Plus, MessageCircle } from "lucide-react";
+import { Plus } from "lucide-react";
+import { useAuth } from "@/lib/AuthContext";
+import { sendContactMessage } from "@/lib/contactApi";
+import { validateContact, CONTACT_LIMITS } from "@/lib/contact";
 
-const FAQS = [
+// Respuestas que solo prometen lo que la web realmente hace.
+export const FAQS = [
   {
     q: "Does it work without internet?",
-    a: "Yes. The Phase 3 mobile application is being built with offline functionality, so you can register fiados and payments even without a connection — everything syncs once you're back online.",
+    a: "Not at the moment. FIA'O needs an internet connection to save and load your notebook, so make sure you're online when you register credits and payments.",
   },
   {
-    q: "How to start using the app?",
-    a: "Simply sign up, add your customers, and start registering debts and payments. No training needed — if you know how to use a notebook, you know how to use FIA'O.",
+    q: "How do I start using the app?",
+    a: "Sign up, tell us about your store, add your customers and start registering credits and payments. No training needed — if you know how to use a notebook, you know how to use FIA'O.",
   },
   {
     q: "Do payment reminders arrive automatically?",
-    a: "Yes. FIA'O's Friendly Collections feature sends automatic WhatsApp reminders to customers with pending balances, so you never have to ask in person.",
+    a: "Not automatically. FIA'O prepares a friendly WhatsApp message for each customer with a pending balance. You review it and send it with one tap from the Clients page.",
   },
   {
     q: "Can I export my reports?",
-    a: "Absolutely. You can export your financial reports as PDF or Excel directly from the Reports page, anytime.",
+    a: "Yes. From the Reports page you can download an Excel file or a PDF for any period you choose.",
   },
   {
     q: "What if a customer doesn't pay?",
-    a: "FIA'O tracks overdue accounts and can automatically block new credits for customers who exceed their debt limit, protecting your business.",
+    a: "FIA'O flags overdue accounts on your Dashboard, in the bell and in Reports, and helps you send reminders. With Automatic Blocking on, it also stops new credit for customers who would go over their limit.",
   },
 ];
 
@@ -32,11 +37,12 @@ function FaqItem({ item }) {
     <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--white)", border: "1px solid var(--border-cream)" }}>
       <button
         onClick={() => setOpen(!open)}
+        aria-expanded={open}
         className="w-full flex items-center justify-between px-5 py-4 text-left"
       >
         <span className="font-semibold text-sm sm:text-base" style={{ color: "var(--text)" }}>{item.q}</span>
         <span className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ml-3" style={{ backgroundColor: "var(--surface)" }}>
-          <Plus className={`w-4 h-4 transition-transform ${open ? "rotate-45" : ""}`} style={{color: "var(--accent-text)" }} />
+          <Plus className={`w-4 h-4 transition-transform ${open ? "rotate-45" : ""}`} style={{ color: "var(--accent-text)" }} />
         </span>
       </button>
       {open && (
@@ -48,18 +54,36 @@ function FaqItem({ item }) {
   );
 }
 
-export default function Contact() {
-  const [form, setForm] = useState({ name: "", email: "", message: "" });
-  const [sent, setSent] = useState(false);
+const fieldStyle = { backgroundColor: "var(--surface)", borderColor: "var(--border-cream)", color: "var(--text)" };
 
-  const handleSubmit = (e) => {
+export default function Contact() {
+  const { user } = useAuth();
+  // Nombre y correo ya vienen de tu cuenta; solo cambian si la persona los edita.
+  const [draft, setDraft] = useState({});
+  const [message, setMessage] = useState("");
+  const [note, setNote] = useState(null);
+
+  const name = draft.name ?? user?.full_name ?? "";
+  const email = draft.email ?? user?.email ?? "";
+
+  const send = useMutation({
+    mutationFn: sendContactMessage,
+    onSuccess: (_, vars) => {
+      setMessage("");
+      setNote({ type: "ok", text: `Thanks! We got your message and we'll reply to ${vars.email}.` });
+    },
+    onError: (e) => setNote({ type: "error", text: e.message }),
+  });
+
+  const submit = (e) => {
     e.preventDefault();
-    setSent(true);
-    setTimeout(() => {
-      setSent(false);
-      setForm({ name: "", email: "", message: "" });
-    }, 2500);
+    setNote(null);
+    const result = validateContact({ name, email, message });
+    if (result.error) return setNote({ type: "error", text: result.error });
+    send.mutate(result.values);
   };
+
+  const left = CONTACT_LIMITS.messageMax - message.length;
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "var(--page-bg)" }}>
@@ -73,7 +97,7 @@ export default function Contact() {
               Have questions? We are here to help
             </h1>
             <p className="text-white/80 max-w-xl mx-auto">
-              Check out the FAQs below or open the chat anytime for instant support.
+              Check out the FAQs below or send us a message and we'll get back to you by email.
             </p>
           </div>
 
@@ -86,60 +110,73 @@ export default function Contact() {
             </div>
 
             {/* Contact form */}
-            <div className="rounded-3xl p-6 sm:p-8" style={{ backgroundColor: "var(--white)", boxShadow: "0 10px 30px rgba(0,0,0,0.1)" }}>
+            <div className="rounded-3xl p-6 sm:p-8 h-fit" style={{ backgroundColor: "var(--white)", boxShadow: "0 10px 30px rgba(0,0,0,0.1)" }}>
               <h2 className="font-bold text-xl mb-5" style={{ color: "var(--text)" }}>Send us a message</h2>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={submit} className="space-y-4" noValidate>
                 <div>
-                  <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--text-muted)" }}>NAME</label>
+                  <label htmlFor="contact-name" className="text-xs font-semibold block mb-1.5" style={{ color: "var(--text-muted)" }}>NAME</label>
                   <input
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    id="contact-name"
+                    value={name}
+                    onChange={(e) => { setDraft({ ...draft, name: e.target.value }); setNote(null); }}
                     placeholder="Your name"
-                    required
+                    maxLength={CONTACT_LIMITS.name}
                     className="w-full rounded-xl px-4 py-3 text-sm border outline-none"
-                    style={{ backgroundColor: "var(--surface)", borderColor: "var(--border-cream)", color: "var(--text)" }}
+                    style={fieldStyle}
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--text-muted)" }}>EMAIL</label>
+                  <label htmlFor="contact-email" className="text-xs font-semibold block mb-1.5" style={{ color: "var(--text-muted)" }}>EMAIL (where we'll reply)</label>
                   <input
+                    id="contact-email"
                     type="email"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    placeholder="yourcorreo@example.com"
-                    required
+                    value={email}
+                    onChange={(e) => { setDraft({ ...draft, email: e.target.value }); setNote(null); }}
+                    placeholder="you@example.com"
+                    maxLength={CONTACT_LIMITS.email}
                     className="w-full rounded-xl px-4 py-3 text-sm border outline-none"
-                    style={{ backgroundColor: "var(--surface)", borderColor: "var(--border-cream)", color: "var(--text)" }}
+                    style={fieldStyle}
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold block mb-1.5" style={{ color: "var(--text-muted)" }}>MESSAGE</label>
+                  <label htmlFor="contact-message" className="text-xs font-semibold block mb-1.5" style={{ color: "var(--text-muted)" }}>MESSAGE</label>
                   <textarea
-                    value={form.message}
-                    onChange={(e) => setForm({ ...form, message: e.target.value })}
+                    id="contact-message"
+                    value={message}
+                    onChange={(e) => { setMessage(e.target.value); setNote(null); }}
                     placeholder="Tell us how we can help you"
-                    required
                     rows={5}
+                    maxLength={CONTACT_LIMITS.messageMax}
                     className="w-full rounded-xl px-4 py-3 text-sm border outline-none resize-none"
-                    style={{ backgroundColor: "var(--surface)", borderColor: "var(--border-cream)", color: "var(--text)" }}
+                    style={fieldStyle}
                   />
+                  <p className="text-[11px] mt-1 text-right" style={{ color: left < 100 ? "var(--bad-text)" : "var(--text-faint)" }}>
+                    {left} characters left
+                  </p>
                 </div>
+
+                {note && (
+                  <p
+                    role={note.type === "ok" ? "status" : "alert"}
+                    className="text-sm rounded-xl px-4 py-3"
+                    style={{ backgroundColor: note.type === "ok" ? "var(--ok-bg)" : "var(--bad-bg)", color: note.type === "ok" ? "var(--ok-text)" : "var(--bad-text)" }}
+                  >
+                    {note.text}
+                  </p>
+                )}
+
                 <button
                   type="submit"
-                  className="w-full py-3.5 rounded-full font-bold text-sm text-white transition-transform hover:scale-[1.02]"
+                  disabled={send.isPending}
+                  className="w-full py-3.5 rounded-full font-bold text-sm text-white transition-transform hover:scale-[1.02] disabled:opacity-60 disabled:hover:scale-100"
                   style={{ backgroundColor: "#B91C1C" }}
                 >
-                  {sent ? "Message sent ✓" : "Send message"}
+                  {send.isPending ? "Sending..." : "Send message"}
                 </button>
               </form>
             </div>
           </div>
         </div>
-
-        {/* Floating chat */}
-        <button className="fixed bottom-6 right-6 w-14 h-14 rounded-full flex items-center justify-center shadow-xl z-50 transition-transform hover:scale-110" style={{ backgroundColor: "var(--btn-solid)" }}>
-          <MessageCircle className="w-6 h-6 text-white" />
-        </button>
       </main>
 
       <Footer />

@@ -50,3 +50,33 @@ export function validateSettings(form) {
 export function isDirty(draft, original) {
   return draft !== null && JSON.stringify(draft) !== JSON.stringify(original);
 }
+
+// ---------------------------------------------------------------------------
+// Configuración inicial (la pantalla /setup que aparece antes del Dashboard)
+// ---------------------------------------------------------------------------
+
+// Un perfil está completo cuando ya tiene el nombre del dueño y el de la tienda.
+export function isProfileComplete(user) {
+  return Boolean(String(user?.full_name ?? "").trim() && String(user?.store_name ?? "").trim());
+}
+
+// Valores por defecto de las reglas de crédito para quien aún no las ha guardado.
+export const DEFAULT_RULES_FORM = { default_credit_limit: "100", default_due_days: "15", auto_block: true };
+
+// Valida todo el formulario inicial. Devuelve { error } o { values } listos para guardar de una vez.
+export function validateSetup(info, rules) {
+  if (!String(info.full_name ?? "").trim()) return { error: "Tell us your name." };
+  if (!String(info.store_name ?? "").trim()) return { error: "Tell us the name of your store." };
+  const profile = validateProfile(info);
+  if (profile.error) return profile;
+  const settings = validateSettings(rules);
+  if (settings.error) return settings;
+  return { values: { ...profile.values, ...settings.values } };
+}
+
+// A dónde ir al terminar. Solo se aceptan rutas internas de la web (nunca otra página ni /setup).
+export function setupReturnPath(from) {
+  if (typeof from !== "string" || !from.startsWith("/") || from.startsWith("//") || from.startsWith("/\\")) return "/dashboard";
+  if (from === "/setup" || from.startsWith("/setup?") || from === "/" || from.startsWith("/login") || from.startsWith("/register")) return "/dashboard";
+  return from;
+}

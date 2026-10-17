@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import ProfileGate from '@/components/ProfileGate';   // debajo de: import ProtectedRoute ...
 import { ThemeProvider } from '@/lib/ThemeContext';
 import Home from '@/pages/Home';
 import Credit from '@/pages/Credit';
@@ -16,6 +17,7 @@ import Reports from '@/pages/Reports';
 import Contact from '@/pages/Contact';
 import Dashboard from '@/pages/Dashboard';
 import Profile from '@/pages/Profile';
+import Setup from '@/pages/Setup';                    // debajo de: import Profile ...
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -57,15 +59,20 @@ const AuthenticatedApp = () => {
       {/* Marketing landing for guests; redirects to dashboard when logged in */}
       <Route path="/" element={<IndexRoute />} />
 
-      {/* App pages (require login) */}
+          {/* App pages (require login) */}
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/credit" element={<Credit />} />
-        <Route path="/products" element={<Products />} />
-        <Route path="/clients" element={<Clients />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/contact" element={<Contact />} />
+        {/* Primera vez: se pide la información del negocio antes de entrar a la app */}
+        <Route path="/setup" element={<Setup />} />
+
+        <Route element={<ProfileGate />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/credit" element={<Credit />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/clients" element={<Clients />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/contact" element={<Contact />} />
+        </Route>
       </Route>
 
       {/* Auth routes */}
